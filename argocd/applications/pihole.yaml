@@ -18,7 +18,7 @@ spec:
     - repoURL: https://mojo2600.github.io/pihole-kubernetes
       chart: pihole
       targetRevision: 2.26.1
-    - repoURL: https://github.com/IronPhysique/k8-devops.git
+    - repoURL: git@github.com:IronPhysique/k8-devops.git
       targetRevision: main
       ref: values
   destination:

@@ -53,7 +53,7 @@ spec:
         - repoURL: '{{repo}}'
           chart: '{{chart}}'
           targetRevision: '{{version}}'
-        - repoURL: https://github.com/IronPhysique/k8-devops.git
+        - repoURL: git@github.com:IronPhysique/k8-devops.git
           targetRevision: main
           ref: values
       destination:
