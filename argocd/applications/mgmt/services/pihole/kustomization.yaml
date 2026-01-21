@@ -12,4 +12,4 @@ helmCharts:
     valuesFile: values.yaml
 
 patchesStrategicMerge:
-  - patch-hostport-dns.yaml
+  - hostport.yaml
