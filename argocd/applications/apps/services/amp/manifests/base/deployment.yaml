@@ -1,0 +1,67 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: amp
+  namespace: amp
+  labels:
+    app: amp
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: amp
+  template:
+    metadata:
+      labels:
+        app: amp
+    spec:
+      containers:
+      - name: amp
+        image: mitchtalmadge/amp-dockerized:latest
+        ports:
+        - name: web
+          containerPort: 8080
+          protocol: TCP
+        - name: amp-core
+          containerPort: 8081
+          protocol: TCP
+        # Game server ports (configurable range)
+        - name: game-start
+          containerPort: 25565
+          protocol: TCP
+        - name: game-end
+          containerPort: 25575
+          protocol: TCP
+        env:
+        - name: TZ
+          value: "UTC"
+        - name: PUID
+          value: "1000"
+        - name: PGID
+          value: "1000"
+        # Default admin credentials (change these!)
+        - name: USERNAME
+          value: "admin"
+        - name: PASSWORD
+          value: "CHANGEME_amp_admin_password"
+        volumeMounts:
+        - name: amp-data
+          mountPath: /home/amp
+        resources:
+          requests:
+            cpu: 500m
+            memory: 2Gi
+          limits:
+            cpu: 4000m
+            memory: 8Gi
+        securityContext:
+          privileged: false
+          allowPrivilegeEscalation: false
+      volumes:
+      - name: amp-data
+        persistentVolumeClaim:
+          claimName: amp-data
+      restartPolicy: Always

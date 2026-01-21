@@ -1,0 +1,31 @@
+---
+# AMP (Application Management Panel) for game servers
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: apps-amp
+  namespace: argocd
+  labels:
+    cluster: apps
+    component: service
+spec:
+  project: applications
+  source:
+    repoURL: git@github.com:IronPhysique/k8-devops.git
+    path: argocd/applications/apps/services/amp/manifests/base
+    targetRevision: main
+  destination:
+    server: https://192.168.178.139:6443
+    namespace: amp
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m
