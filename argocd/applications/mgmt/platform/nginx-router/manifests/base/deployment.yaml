@@ -16,8 +16,6 @@ spec:
       labels:
         app: nginx-router
     spec:
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: nginx
         image: nginx:alpine
