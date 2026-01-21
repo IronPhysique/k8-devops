@@ -31,7 +31,7 @@ data:
         # Pi-hole Web UI
         server {
             listen 80;
-            server_name pihole.local pihole.mgmt.local;
+            server_name pihole.home pihole.local;
 
             location / {
                 proxy_pass http://pihole-web.pihole.svc.cluster.local;
@@ -45,7 +45,7 @@ data:
         # ArgoCD UI
         server {
             listen 80;
-            server_name argocd.local argocd.mgmt.local;
+            server_name argocd.home argocd.local;
 
             location / {
                 proxy_pass http://argocd-server.argocd.svc.cluster.local;
@@ -56,6 +56,20 @@ data:
                 proxy_http_version 1.1;
                 proxy_set_header Upgrade $http_upgrade;
                 proxy_set_header Connection "upgrade";
+            }
+        }
+
+        # Grafana UI
+        server {
+            listen 80;
+            server_name grafana.home grafana.local;
+
+            location / {
+                proxy_pass http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
             }
         }
 
