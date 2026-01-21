@@ -24,10 +24,11 @@ serviceDhcp:
   enabled: false
 
 serviceWeb:
-  type: ClusterIP
+  type: NodePort
   http:
     enabled: true
     port: 80
+    nodePort: 30053
   https:
     enabled: false
 
