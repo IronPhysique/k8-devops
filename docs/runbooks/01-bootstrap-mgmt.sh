@@ -1,8 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-
+# -----------------------------------------------------------------------------
 # SSH configuration (key-based, non-interactive)
+# -----------------------------------------------------------------------------
 SSH_USER="${SSH_USER:-ryan}"
 SSH_KEY="${SSH_KEY:-$HOME/.ssh/homelab-k8}"
 
@@ -14,40 +15,13 @@ SSH_OPTS=(
 )
 
 ################################################################################
-# Improved Bootstrap Script for the Management Cluster
-#
-# This script installs k3s on your Raspberry Pi management node, installs
-# Traefik and Argo CD, and deploys the root GitOps application.  It is a
-# drop‑in replacement for `01-bootstrap-mgmt.sh` that resolves several
-# shortcomings in the original version:
-#
-#  • Reads configuration values from `config.env` automatically if present.
-#    You no longer need to hard‑code IP addresses in the script.  The
-#    variables `MGMT_IP`, `GITHUB_REPO` and `GITHUB_USERNAME` must be set in
-#    your environment or defined in `config.env`.
-#
-#  • Passes the management IP into the remote installer via a positional
-#    parameter.  The original script incorrectly used `${MGMT_IP}` inside a
-#    single‑quoted heredoc, causing the literal string `${MGMT_IP}` to be
-#    passed to k3s.  The improved version ensures the remote host uses the
-#    correct IP for the TLS SAN.
-#
-#  • Uses a portable in‑place `sed` invocation so that the script works on
-#    both GNU/Linux and macOS.  BSD sed requires an empty suffix when
-#    performing in‑place substitutions.
-#
-#  • Replaces `YOUR_USERNAME` in the Argo CD root application with
-#    `GITHUB_USERNAME` instead of mis‑deriving it from `GITHUB_REPO`.  This
-#    ensures Argo CD checks out the correct GitHub repository.
-#
-# Usage:
-#   chmod +x 01-bootstrap-mgmt.improved.sh
-#   ./01-bootstrap-mgmt.improved.sh
+# Improved Bootstrap Script for the Management Cluster (Drop-in)
+# - Forces clean reinstall of k3s to avoid old systemd ExecStart flags
+# - Installs k3s with minimal safe flags (no advertise/node-ip)
+# - Fixes kubeconfig server endpoint for remote kubectl usage
 ################################################################################
 
-# Try to source config.env from the project root.  We compute PROJECT_ROOT
-# relative to this script's location.  If the file doesn't exist you can
-# export the variables yourself before running the script.
+# Try to source config.env from the project root.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="${SCRIPT_DIR%/docs/runbooks}"
 if [ -f "${PROJECT_ROOT}/config.env" ]; then
@@ -55,71 +29,115 @@ if [ -f "${PROJECT_ROOT}/config.env" ]; then
   . "${PROJECT_ROOT}/config.env"
 fi
 
-# Ensure required variables are present.
 : "${MGMT_IP:?MGMT_IP not set}"
 : "${GITHUB_REPO:?GITHUB_REPO not set}"
 : "${GITHUB_USERNAME:?GITHUB_USERNAME not set}"
+
+LB_TYPE="${LB_TYPE:-NodePort}" # Set LB_TYPE=LoadBalancer if you have MetalLB, etc.
 
 echo "=== Phase 1: Bootstrap Management Cluster ==="
 echo "Target: ${MGMT_IP}"
 echo ""
 
 ###############################################
-# Step 1: Install k3s on management node (Pi 5)
+# Step 1: Clean install k3s on management node
 ###############################################
-echo "[1/6] Installing k3s on management cluster..."
+echo "[1/6] Installing k3s on management cluster (clean reinstall)..."
 ssh "${SSH_OPTS[@]}" "${SSH_USER}@${MGMT_IP}" bash -s -- "${MGMT_IP}" <<'REMOTE_SCRIPT'
+set -euo pipefail
 MGMT_IP="$1"
 
-  set -euo pipefail
-  # System preparation
-  sudo apt update
-  sudo apt install -y curl
+echo "==> Removing any existing k3s (if present)..."
+if [ -x /usr/local/bin/k3s-uninstall.sh ]; then
+  sudo /usr/local/bin/k3s-uninstall.sh || true
+fi
 
-  # Install k3s (control‑plane).  We disable the built‑in Traefik and
-  # service‑loadbalancer because we manage ingress ourselves.  The
-  # `--tls-san` option ensures that the API server advertises the LAN IP,
-  # otherwise clients will default to 127.0.0.1 in the generated kubeconfig.
-  curl -sfL https://get.k3s.io | sh -s - \
-    --write-kubeconfig-mode 644 \
-    --disable traefik \
-    --disable servicelb \
-    --tls-san "${MGMT_IP}" \
-    --node-label "node-role.kubernetes.io/control-plane=true" \
-    --node-label "homelab/cluster=mgmt"
+# Ensure service is not running/restarting with old args
+sudo systemctl stop k3s 2>/dev/null || true
+sudo systemctl disable k3s 2>/dev/null || true
 
-  echo "Waiting for k3s to become ready..."
-  until sudo k3s kubectl get nodes | grep -q Ready; do
-    sleep 5
-  done
+# Remove unit file if it still exists for any reason
+sudo rm -f /etc/systemd/system/k3s.service /etc/systemd/system/k3s.service.env 2>/dev/null || true
+sudo systemctl daemon-reload || true
 
-  echo "k3s installed successfully"
+# Remove leftover state
+sudo rm -rf /etc/rancher/k3s /var/lib/rancher/k3s
+
+echo "==> Installing dependencies..."
+sudo apt update
+sudo apt install -y curl
+
+echo "==> Installing k3s (minimal safe flags)..."
+curl -sfL https://get.k3s.io | sh -s - \
+  --write-kubeconfig-mode 644 \
+  --disable traefik \
+  --disable servicelb \
+  --tls-san "${MGMT_IP}" \
+  --node-label "homelab/cluster=mgmt"
+
+echo "==> Waiting for k3s service to be active..."
+for i in {1..60}; do
+  if sudo systemctl is-active --quiet k3s; then
+    break
+  fi
+  sleep 2
+done
+
+if ! sudo systemctl is-active --quiet k3s; then
+  echo "ERROR: k3s service is not active"
+  sudo systemctl status k3s --no-pager -l | tail -n 120 || true
+  sudo journalctl -u k3s --no-pager -n 200 || true
+  exit 1
+fi
+
+echo "==> Waiting for node to become Ready..."
+for i in {1..120}; do
+  status="$(sudo k3s kubectl get nodes --no-headers 2>/dev/null | awk '{print $2}' | head -n1 || true)"
+  echo "  node status: ${status:-unknown}"
+  if echo "$status" | grep -q "Ready"; then
+    echo "k3s installed successfully"
+    exit 0
+  fi
+  sleep 2
+done
+
+echo "ERROR: Timed out waiting for node Ready"
+sudo k3s kubectl get nodes -o wide || true
+sudo systemctl status k3s --no-pager -l | tail -n 120 || true
+sudo journalctl -u k3s --no-pager -n 200 || true
+exit 1
 REMOTE_SCRIPT
 
 ###################################################
-# Step 2: Retrieve and fix the kubeconfig for mgmt
+# Step 2: Retrieve and fix the kubeconfig for mgmt
 ###################################################
 echo "[2/6] Copying kubeconfig..."
 mkdir -p "$HOME/.kube"
 scp "${SSH_OPTS[@]}" "${SSH_USER}@${MGMT_IP}:/etc/rancher/k3s/k3s.yaml" "$HOME/.kube/config-mgmt"
 
-# Use a sed invocation that works on both GNU and BSD sed.
+# Portable sed -i
 if sed --version >/dev/null 2>&1; then
   SED_I=( -i )
 else
   SED_I=( -i '' )
 fi
-# Replace localhost with the management IP so kubectl contacts the Pi.
-sed "${SED_I[@]}" "s/127\.0\.0\.1/${MGMT_IP}/g" "$HOME/.kube/config-mgmt"
-# Set appropriate permissions and export KUBECONFIG
+
+# Fix ONLY the server line
+sed "${SED_I[@]}" \
+  "s#^\\( *server: \\)https://127\\.0\\.0\\.1:6443#\\1https://${MGMT_IP}:6443#g" \
+  "$HOME/.kube/config-mgmt"
+
 chmod 600 "$HOME/.kube/config-mgmt"
 export KUBECONFIG="$HOME/.kube/config-mgmt"
 
+echo "Kubeconfig server endpoint:"
+kubectl config view --minify --raw | awk '/server:/{print}'
+
 ###############################################
-# Step 3: Install Traefik for management cluster
+# Step 3: Install Traefik for management cluster
 ###############################################
 echo "[3/6] Installing Traefik..."
-kubectl apply -f - <<'EOF_TRAEFIK'
+kubectl apply -f - <<EOF_TRAEFIK
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -149,34 +167,31 @@ spec:
         exposedPort: 53
         protocol: UDP
     service:
-      type: LoadBalancer
+      type: ${LB_TYPE}
 EOF_TRAEFIK
 
 echo "Waiting for Traefik to become ready..."
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=traefik -n traefik --timeout=300s
 
 ###################################################
-# Step 4: Install Argo CD on management cluster
+# Step 4: Install Argo CD on management cluster
 ###################################################
 echo "[4/6] Installing Argo CD..."
 kubectl create namespace argocd || true
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-
-# Apply any custom Argo CD configuration from bootstrap/argocd-install.yaml
 kubectl apply -f "$PROJECT_ROOT/bootstrap/argocd-install.yaml"
 
 echo "Waiting for Argo CD to become ready..."
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=argocd-server -n argocd --timeout=600s
 
-# Show initial password
-ARGOCD_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)
+ARGOCD_PASSWORD="$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)"
 echo ""
 echo "Argo CD admin password: ${ARGOCD_PASSWORD}"
 echo "Save this password!"
 echo ""
 
 ########################################################
-# Step 5: Expose Argo CD via Traefik IngressRoute
+# Step 5: Expose Argo CD via Traefik IngressRoute
 ########################################################
 echo "[5/6] Exposing Argo CD UI..."
 kubectl apply -f - <<'EOF_ARGO_INGRESS'
@@ -200,13 +215,9 @@ EOF_ARGO_INGRESS
 echo "Argo CD UI: http://${MGMT_IP} (or http://argocd.mgmt.local if DNS configured)"
 
 ########################################################
-# Step 6: Deploy the root Application (GitOps bootstrap)
+# Step 6: Deploy the root Application (GitOps bootstrap)
 ########################################################
 echo "[6/6] Deploying root Application..."
-
-# Replace placeholder username with your actual GitHub username and apply
-# through kubectl.  Using `${GITHUB_USERNAME}` ensures that Argo CD clones
-# from `https://github.com/${GITHUB_USERNAME}/homelab.git`.
 sed "s|YOUR_USERNAME|${GITHUB_USERNAME}|g" "$PROJECT_ROOT/bootstrap/root-app.yaml" | kubectl apply -f -
 
 echo ""
@@ -222,7 +233,4 @@ echo ""
 echo "Verify GitOps sync:"
 echo "  kubectl get applications -n argocd"
 echo ""
-echo "Wait for all applications to sync (5-10 minutes):"
-echo "  watch kubectl get applications -n argocd"
-echo ""
-echo "Next: Run 02-bootstrap-apps.improved.sh"
+echo "Next: Run 02-bootstrap-apps.sh"

@@ -11,7 +11,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/IronPhysique/k8-devops.git  # UPDATE THIS
+    repoURL: https://github.com/IronPhysique/k8-devops.git
     targetRevision: main
     path: argocd
     directory:
