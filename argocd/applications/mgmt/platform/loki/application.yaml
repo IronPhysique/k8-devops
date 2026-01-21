@@ -1,0 +1,42 @@
+---
+# Grafana Loki for mgmt cluster
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mgmt-loki
+  namespace: argocd
+  labels:
+    cluster: mgmt
+    component: platform
+spec:
+  project: mgmt-platform
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    chart: loki
+    targetRevision: 6.23.0
+    helm:
+      valueFiles:
+        - '$values/argocd/applications/mgmt/platform/loki/values.yaml'
+  sources:
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: loki
+      targetRevision: 6.23.0
+    - repoURL: git@github.com:IronPhysique/k8-devops.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m

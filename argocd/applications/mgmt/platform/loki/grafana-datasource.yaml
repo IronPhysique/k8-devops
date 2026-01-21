@@ -1,0 +1,26 @@
+---
+# Grafana datasource for Loki
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasource-loki
+  namespace: monitoring
+  labels:
+    grafana_datasource: "1"
+data:
+  loki-datasource.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki-gateway.monitoring.svc:80
+        isDefault: false
+        editable: true
+        jsonData:
+          maxLines: 1000
+          derivedFields:
+            - datasourceUid: prometheus
+              matcherRegex: "traceID=(\\w+)"
+              name: TraceID
+              url: "$${__value.raw}"
