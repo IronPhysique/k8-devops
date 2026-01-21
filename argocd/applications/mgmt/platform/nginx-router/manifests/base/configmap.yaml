@@ -31,7 +31,11 @@ data:
         # Pi-hole Web UI
         server {
             listen 80;
+            listen 443 ssl;
             server_name pihole.home pihole.local;
+
+            ssl_certificate /etc/nginx/certs/tls.crt;
+            ssl_certificate_key /etc/nginx/certs/tls.key;
 
             location / {
                 proxy_pass http://pihole-web.pihole.svc.cluster.local;
@@ -45,7 +49,11 @@ data:
         # ArgoCD UI
         server {
             listen 80;
+            listen 443 ssl;
             server_name argocd.home argocd.local;
+
+            ssl_certificate /etc/nginx/certs/tls.crt;
+            ssl_certificate_key /etc/nginx/certs/tls.key;
 
             location / {
                 proxy_pass http://argocd-server.argocd.svc.cluster.local;
@@ -62,7 +70,11 @@ data:
         # Grafana UI
         server {
             listen 80;
+            listen 443 ssl;
             server_name grafana.home grafana.local;
+
+            ssl_certificate /etc/nginx/certs/tls.crt;
+            ssl_certificate_key /etc/nginx/certs/tls.key;
 
             location / {
                 proxy_pass http://mgmt-kube-prometheus-stack-grafana.monitoring.svc.cluster.local;
@@ -76,7 +88,11 @@ data:
         # AMP (Application Management Panel)
         server {
             listen 80;
+            listen 443 ssl;
             server_name amp.home amp.local;
+
+            ssl_certificate /etc/nginx/certs/tls.crt;
+            ssl_certificate_key /etc/nginx/certs/tls.key;
 
             location / {
                 proxy_pass http://192.168.178.139:31866;
@@ -90,7 +106,12 @@ data:
         # Default server - return 404
         server {
             listen 80 default_server;
+            listen 443 ssl default_server;
             server_name _;
+
+            ssl_certificate /etc/nginx/certs/tls.crt;
+            ssl_certificate_key /etc/nginx/certs/tls.key;
+
             return 404;
         }
     }

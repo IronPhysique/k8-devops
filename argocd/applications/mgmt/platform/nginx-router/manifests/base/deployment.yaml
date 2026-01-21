@@ -24,10 +24,15 @@ spec:
         ports:
         - containerPort: 80
           protocol: TCP
+        - containerPort: 443
+          protocol: TCP
         volumeMounts:
         - name: nginx-config
           mountPath: /etc/nginx/nginx.conf
           subPath: nginx.conf
+        - name: tls-certs
+          mountPath: /etc/nginx/certs
+          readOnly: true
         resources:
           requests:
             cpu: 50m
@@ -39,5 +44,8 @@ spec:
       - name: nginx-config
         configMap:
           name: nginx-router-config
+      - name: tls-certs
+        secret:
+          secretName: home-tls
       nodeSelector:
         kubernetes.io/arch: arm64
