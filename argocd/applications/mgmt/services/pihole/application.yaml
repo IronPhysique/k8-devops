@@ -10,6 +10,8 @@ spec:
     repoURL: git@github.com:IronPhysique/k8-devops.git
     targetRevision: main
     path: argocd/applications/mgmt/services/pihole
+    kustomize:
+      buildOptions: "--enable-helm"
 
   destination:
     server: https://kubernetes.default.svc
