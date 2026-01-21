@@ -12,7 +12,6 @@ This repository uses a **GitOps approach** where all Kubernetes resources are de
 homelab/
 ├── argocd/                 # All ArgoCD and Kubernetes resources
 │   ├── applications/      # Application definitions (each app in its own directory)
-│   ├── apps/              # Non-Helm app manifests (nginx-router, etc.)
 │   └── bootstrap/         # Foundation resources (projects, root apps)
 ├── bootstrap/              # Initial cluster setup scripts
 ├── docs/                  # Documentation and runbooks
@@ -31,39 +30,42 @@ argocd/
 │   ├── projects.yaml     # AppProjects (mgmt-platform, apps-platform, applications)
 │   └── root-app.yaml     # Root applications that bootstrap everything
 │
-├── applications/          # Application definitions (each app in its own directory)
-│   ├── mgmt/             # Management cluster apps
-│   │   ├── platform/     # Infrastructure components
-│   │   │   ├── kube-prometheus-stack/
-│   │   │   │   ├── application.yaml         # ArgoCD Application definition
-│   │   │   │   ├── values.yaml              # Helm values
-│   │   │   │   └── grafana-datasource-apps.yaml  # Additional configs
-│   │   │   ├── cert-manager/
-│   │   │   │   ├── application.yaml
-│   │   │   │   ├── values.yaml
-│   │   │   │   └── clusterissuer.yaml
-│   │   │   ├── sealed-secrets/
-│   │   │   ├── alloy/
-│   │   │   └── nginx-router/
-│   │   └── services/     # Services
-│   │       └── pihole/
-│   │           ├── application.yaml
-│   │           ├── values.yaml
-│   │           └── traefik.yaml
-│   └── apps/             # Apps cluster apps
-│       └── platform/     # Infrastructure
-│           ├── kube-prometheus-stack/
-│           ├── cert-manager/
-│           ├── sealed-secrets/
-│           └── alloy/
-│
-└── apps/                  # Raw manifests for non-Helm applications
-    └── nginx-router/      # Kustomize/plain YAML apps
-        └── base/
-            ├── namespace.yaml
-            ├── configmap.yaml
-            ├── deployment.yaml
-            └── kustomization.yaml
+└── applications/          # Application definitions (each app in its own directory)
+    ├── mgmt/             # Management cluster apps
+    │   ├── platform/     # Infrastructure components
+    │   │   ├── kube-prometheus-stack/
+    │   │   │   ├── application.yaml         # ArgoCD Application definition
+    │   │   │   ├── values.yaml              # Helm values
+    │   │   │   └── grafana-datasource-apps.yaml  # Additional configs
+    │   │   ├── cert-manager/
+    │   │   │   ├── application.yaml
+    │   │   │   ├── values.yaml
+    │   │   │   └── clusterissuer.yaml
+    │   │   ├── sealed-secrets/
+    │   │   │   ├── application.yaml
+    │   │   │   └── values.yaml
+    │   │   ├── alloy/
+    │   │   │   ├── application.yaml
+    │   │   │   └── values.yaml
+    │   │   └── nginx-router/
+    │   │       ├── application.yaml
+    │   │       └── manifests/         # Kubernetes manifests for non-Helm app
+    │   │           └── base/
+    │   │               ├── namespace.yaml
+    │   │               ├── configmap.yaml
+    │   │               ├── deployment.yaml
+    │   │               └── kustomization.yaml
+    │   └── services/     # Services
+    │       └── pihole/
+    │           ├── application.yaml
+    │           ├── values.yaml
+    │           └── traefik.yaml
+    └── apps/             # Apps cluster apps
+        └── platform/     # Infrastructure
+            ├── kube-prometheus-stack/
+            ├── cert-manager/
+            ├── sealed-secrets/
+            └── alloy/
 ```
 
 **Key Concepts:**
@@ -71,26 +73,24 @@ argocd/
 - **applications/**: Each app has its OWN directory containing ALL related files:
   - `application.yaml` - ArgoCD Application definition (what to deploy)
   - `values.yaml` - Helm values (for Helm charts)
+  - `manifests/` - Kubernetes YAML files (for non-Helm apps)
   - Any additional configs (ClusterIssuers, ConfigMaps, IngressRoutes, etc.)
-
-- **apps/**: Actual Kubernetes manifests for non-Helm applications (nginx-router uses this)
 
 **Important Notes:**
 
 1. **For Helm apps:** Everything lives in `applications/<cluster>/<category>/<app>/`
    - Example: `applications/mgmt/platform/kube-prometheus-stack/` has application.yaml AND values.yaml
 
-2. **For non-Helm apps:** Split between two locations:
-   - Application definition: `applications/<cluster>/<category>/<app>/application.yaml`
-   - Actual manifests: `apps/<app>/base/*.yaml`
-   - Example: nginx-router has Application def in `applications/mgmt/platform/nginx-router/` but manifests in `apps/nginx-router/base/`
-   - Why? The manifests aren't ArgoCD resources, they're the actual Kubernetes YAML files
+2. **For non-Helm apps:** Everything ALSO lives in the same app directory
+   - Application definition: `application.yaml`
+   - Kubernetes manifests: `manifests/base/*.yaml`
+   - Example: `applications/mgmt/platform/nginx-router/` contains both application.yaml AND manifests/base/
 
 **Benefits of This Structure:**
-- **No hunting for Helm apps**: Everything for an app is in ONE place
-- **Clear separation for non-Helm apps**: Application definition vs actual manifests
+- **Everything in ONE place**: All files for an app (Helm or non-Helm) are in one directory
+- **No hunting**: Want to change nginx-router? Everything is in `applications/mgmt/platform/nginx-router/`
 - **Easy to find**: Want to see Pi-hole config? Look in `applications/mgmt/services/pihole/`
-- **Clear ownership**: Each directory is self-contained
+- **Clear ownership**: Each directory is completely self-contained
 - **Better git history**: Changes to one app don't touch other apps
 
 ### bootstrap/ (Top-Level)
@@ -175,13 +175,13 @@ Deployed resources in monitoring namespace
 
 ```
 argocd/applications/mgmt/platform/nginx-router/
-└── application.yaml        # Points to argocd/apps/nginx-router/base/
-    ↓
-argocd/apps/nginx-router/base/
-├── namespace.yaml
-├── deployment.yaml
-├── service.yaml
-└── kustomization.yaml
+├── application.yaml        # Points to manifests/base/ subdirectory
+└── manifests/
+    └── base/
+        ├── namespace.yaml
+        ├── deployment.yaml
+        ├── configmap.yaml
+        └── kustomization.yaml
     ↓ (ArgoCD applies manifests)
 Deployed resources in nginx-router namespace
 ```
@@ -211,20 +211,22 @@ argocd/applications/<cluster>/<category>/<app-name>/
 
 ### 2. Application Manifests (Non-Helm)
 
-**Location:** `argocd/apps/<app-name>/base/`
+**Location:** `argocd/applications/<cluster>/<category>/<app-name>/manifests/base/`
 
 **Structure:**
 ```
-argocd/apps/my-app/
-├── base/
-│   ├── kustomization.yaml
-│   ├── namespace.yaml
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   └── configmap.yaml
-└── overlays/              # (Optional) for environment-specific overrides
-    ├── dev/
-    └── prod/
+argocd/applications/<cluster>/<category>/<app-name>/
+├── application.yaml       # ArgoCD Application definition
+└── manifests/
+    ├── base/
+    │   ├── kustomization.yaml
+    │   ├── namespace.yaml
+    │   ├── deployment.yaml
+    │   ├── service.yaml
+    │   └── configmap.yaml
+    └── overlays/          # (Optional) for environment-specific overrides
+        ├── dev/
+        └── prod/
 ```
 
 ### 3. Helm Values and Configurations
@@ -272,23 +274,25 @@ argocd/applications/mgmt/platform/kube-prometheus-stack/
 
 ### Adding a Non-Helm Application
 
-1. Create manifests:
+1. Create app directory structure:
    ```bash
-   mkdir -p argocd/apps/my-app/base
-   vim argocd/apps/my-app/base/deployment.yaml
-   vim argocd/apps/my-app/base/service.yaml
-   vim argocd/apps/my-app/base/kustomization.yaml
+   mkdir -p argocd/applications/mgmt/services/my-app/manifests/base
    ```
 
-2. Create app directory and Application definition:
+2. Create manifests:
    ```bash
-   mkdir -p argocd/applications/mgmt/services/my-app
+   vim argocd/applications/mgmt/services/my-app/manifests/base/deployment.yaml
+   vim argocd/applications/mgmt/services/my-app/manifests/base/service.yaml
+   vim argocd/applications/mgmt/services/my-app/manifests/base/kustomization.yaml
+   ```
+
+3. Create Application definition:
+   ```bash
    vim argocd/applications/mgmt/services/my-app/application.yaml
    ```
 
-3. Commit and push:
+4. Commit and push:
    ```bash
-   git add argocd/apps/my-app/
    git add argocd/applications/mgmt/services/my-app/
    git commit -m "Add my-app"
    git push
@@ -299,8 +303,7 @@ argocd/applications/mgmt/platform/kube-prometheus-stack/
 | Directory | Purpose | Contains |
 |-----------|---------|----------|
 | `argocd/bootstrap/` | Bootstrap resources | AppProjects, root Applications |
-| `argocd/applications/` | App directories | Each app in its own dir with application.yaml, values.yaml, configs |
-| `argocd/apps/` | Non-Helm manifests | Kustomize/plain YAML for apps like nginx-router |
+| `argocd/applications/` | App directories | Each app in its own dir: application.yaml, values.yaml, manifests/, configs |
 | `bootstrap/` | Cluster setup | Installation scripts, root-app.yaml, ArgoCD install config |
 | `docs/` | Documentation | Runbooks, guides, references |
 | `examples/` | Sample apps | Example deployments for learning |
@@ -321,8 +324,8 @@ argocd/applications/mgmt/platform/kube-prometheus-stack/
 3. **Separate concerns:**
    - Platform components in `platform/`
    - User services in `services/`
-   - Helm apps: Everything in app directory
-   - Non-Helm apps: Manifests in `argocd/apps/`, Application def in `argocd/applications/`
+   - Helm apps: application.yaml + values.yaml in app directory
+   - Non-Helm apps: application.yaml + manifests/ subdirectory in app directory
 
 4. **Documentation:**
    - Update CHANGELOG.md for significant changes
@@ -341,9 +344,9 @@ argocd/applications/<cluster>/<platform|services>/<app>/
 
 # 2. A non-Helm application?
 argocd/applications/<cluster>/<platform|services>/<app>/
-└── application.yaml    # Application definition (points to argocd/apps/<app>/)
-argocd/apps/<app>/base/
-└── *.yaml             # Kubernetes manifests
+├── application.yaml    # Application definition (points to manifests/base/)
+└── manifests/base/
+    └── *.yaml         # Kubernetes manifests
 
 # 3. Additional app configs (ClusterIssuer, ConfigMaps, IngressRoutes)?
 argocd/applications/<cluster>/<platform|services>/<app>/
