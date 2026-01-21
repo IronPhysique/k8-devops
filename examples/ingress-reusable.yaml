@@ -1,0 +1,45 @@
+# Reusable Ingress Template - No Hardcoded Values
+# 
+# ✅ external-dns automatically reads hostname from spec.rules[].host (no annotation needed)
+# ✅ external-dns automatically detects IP from ingress status (if Traefik sets it)
+# 
+# Usage: Copy this file and replace these placeholders:
+#   - APP_NAME → Your app name (e.g., "argocd", "grafana", "pihole")
+#   - NAMESPACE → Your namespace (e.g., "argocd", "monitoring", "pihole")
+#   - SERVICE_NAME → Your Kubernetes service name
+#   - SERVICE_PORT → Your service port (usually 80)
+#   - HOSTNAME → Your hostname prefix (e.g., "argocd" becomes "argocd.iron-lab.org")
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: APP_NAME-ingress
+  namespace: NAMESPACE
+  annotations:
+    # cert-manager: Automatically issue/renew Let's Encrypt certificate
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    
+    # external-dns: No annotation needed!
+    # external-dns automatically reads hostname from spec.rules[].host below
+    # external-dns automatically detects IP from ingress status or node IP
+    
+    # Traefik: Force HTTPS redirect
+    traefik.ingress.kubernetes.io/redirect-entry-point: https
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - HOSTNAME.iron-lab.org
+      secretName: APP_NAME-tls
+  rules:
+    - host: HOSTNAME.iron-lab.org
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: SERVICE_NAME
+                port:
+                  number: SERVICE_PORT

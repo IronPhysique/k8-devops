@@ -38,11 +38,14 @@ spec:
 
         # Resource types to watch
         sources:
-          - service
           - ingress
 
         # Annotation filter (optional - only sync annotated resources)
-        # annotationFilter: "external-dns.alpha.kubernetes.io/hostname"
+        # If unset, external-dns reads hostname from spec.rules[].host automatically
+        
+        # For k3s with Traefik: Configure to use node IP when ingress status is empty
+        # This allows external-dns to auto-detect the IP without hardcoding per-ingress
+        publishInternalServices: true
 
         # Logging
         logLevel: info

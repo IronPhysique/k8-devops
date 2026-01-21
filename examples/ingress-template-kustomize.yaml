@@ -1,0 +1,49 @@
+# Reusable Ingress Template using Kustomize
+# 
+# This template uses Kustomize replacements to avoid hardcoding values
+# 
+# Usage in kustomization.yaml:
+#   replacements:
+#     - source:
+#         kind: ConfigMap
+#         name: ingress-config
+#         fieldPath: data.serviceName
+#       target:
+#         kind: Ingress
+#         name: app-ingress
+#         fieldPath: spec.rules[0].http.paths[0].backend.service.name
+#
+# Or use simpler approach - just set values in kustomization.yaml
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+  namespace: APP_NAMESPACE
+  annotations:
+    # cert-manager: Automatically issue/renew Let's Encrypt certificate
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    
+    # external-dns: Reads hostname from spec.rules[].host automatically
+    # No annotation needed - external-dns will read from spec.rules[].host
+    
+    # Traefik: Force HTTPS redirect
+    traefik.ingress.kubernetes.io/redirect-entry-point: https
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - APP_HOSTNAME.iron-lab.org
+      secretName: app-tls
+  rules:
+    - host: APP_HOSTNAME.iron-lab.org
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: SERVICE_NAME
+                port:
+                  number: SERVICE_PORT

@@ -9,8 +9,8 @@ metadata:
     # cert-manager: Automatically issue/renew Let's Encrypt certificate
     cert-manager.io/cluster-issuer: letsencrypt-prod
     
-    # external-dns: Automatically create DNS A record in Cloudflare
-    external-dns.alpha.kubernetes.io/hostname: pihole.iron-lab.org
+    # external-dns: Automatically reads hostname from spec.rules[].host
+    # external-dns: Automatically detects IP from ingress status or node IP
     
     # Traefik: Force HTTPS redirect
     traefik.ingress.kubernetes.io/redirect-entry-point: https
