@@ -31,7 +31,7 @@ spec:
     - '*'
   destinations:
     - namespace: '*'
-      server: https://apps-cluster  # Will be cluster URL after registration
+      server: https://192.168.178.139:6443  # Will be cluster URL after registration
   clusterResourceWhitelist:
     - group: '*'
       kind: '*'
@@ -51,7 +51,7 @@ spec:
     - '*'
   destinations:
     - namespace: '*'
-      server: https://apps-cluster
+      server: https://192.168.178.139:6443
   clusterResourceWhitelist:
     - group: ''
       kind: Namespace
