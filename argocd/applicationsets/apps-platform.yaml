@@ -27,12 +27,12 @@ spec:
             repo: https://prometheus-community.github.io/helm-charts
             version: 67.7.0
             valuesFile: clusters/apps/prometheus-values.yaml
-          - name: promtail
+          - name: alloy
             namespace: monitoring
-            chart: promtail
+            chart: alloy
             repo: https://grafana.github.io/helm-charts
-            version: 6.16.6
-            valuesFile: clusters/apps/promtail-values.yaml
+            version: 0.11.0
+            valuesFile: clusters/apps/alloy-values.yaml
   template:
     metadata:
       name: 'apps-{{name}}'
