@@ -24,7 +24,6 @@ dnsmasq:
     - 192.168.178.144 argocd.local
     - 192.168.178.144 pihole.local
     - 192.168.178.144 grafana.local
-  customSettings:
+  customSettings: |
     # Override interface restriction - listen on all except loopback
-    03-custom-interface.conf: |
-      except-interface=lo
+    except-interface=lo
