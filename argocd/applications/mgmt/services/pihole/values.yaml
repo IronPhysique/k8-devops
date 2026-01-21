@@ -12,6 +12,7 @@ webHttp: "8053"
 # Environment variables to configure Pi-hole
 extraEnvVars:
   WEB_PORT: "8053"
+  DNSMASQ_LISTENING: "all"
 
 # Service configuration (hostNetwork bypasses service, but keep for compatibility)
 service:
