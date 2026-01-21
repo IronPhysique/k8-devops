@@ -57,7 +57,7 @@ spec:
           targetRevision: main
           ref: values
       destination:
-        server: https://apps-cluster  # Will match cluster name after registration
+        server: https://192.168.178.139:6443
         namespace: '{{namespace}}'
       syncPolicy:
         automated:
