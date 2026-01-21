@@ -10,5 +10,10 @@ data:
   # Point local domains to mgmt cluster IP (nginx-router will handle routing)
   custom-dns.list: |
     192.168.178.144 argocd.local
+    192.168.178.144 argocd.home
     192.168.178.144 pihole.local
+    192.168.178.144 pihole.home
     192.168.178.144 grafana.local
+    192.168.178.144 grafana.home
+    192.168.178.144 amp.local
+    192.168.178.144 amp.home
