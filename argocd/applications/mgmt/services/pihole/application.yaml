@@ -6,6 +6,7 @@ metadata:
 spec:
   project: mgmt-platform
 
+  # Proper multi-source setup (don't use spec.source at all)
   sources:
     # Helm chart source
     - repoURL: https://mojo2600.github.io/pihole-kubernetes
@@ -15,7 +16,7 @@ spec:
         valueFiles:
           - $values/argocd/applications/mgmt/services/pihole/values.yaml
 
-    # Values repo (this is what $values points to)
+    # Values repo source ($values points at this ref)
     - repoURL: git@github.com:IronPhysique/k8-devops.git
       targetRevision: main
       ref: values
@@ -30,3 +31,9 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m

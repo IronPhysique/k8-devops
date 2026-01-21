@@ -1,39 +1,40 @@
-# Pi-hole DNS and ad-blocking for homelab
+# Pi-hole DNS and ad-blocking for homelab (GitOps-friendly)
 
 image:
   repository: pihole/pihole
   tag: "2024.07.0"
 
-# Upstream DNS (Pi-hole forwards here)
+# Upstream DNS resolvers (Pi-hole forwards here)
 DNS1: "1.1.1.1"
 DNS2: "1.0.0.1"
 
-# DNS service (internal only, hostNetwork does the real exposure)
-serviceDns:
-  type: ClusterIP
-  port: 53
+# IMPORTANT:
+# Do NOT set adminPassword / WEBPASSWORD here if the chart already uses the
+# pihole-password secret (your deployment showed it does). Avoid duplicates.
 
 serviceDhcp:
   enabled: false
 
-# Web UI
+# Web UI: do NOT use NodePort (avoid 30053 conflicts); access via ingress/nginx-router
 serviceWeb:
-  type: NodePort
+  type: ClusterIP
   http:
     enabled: true
     port: 80
-    nodePort: 30053
   https:
     enabled: false
 
-# Storage
+# DNS service: ClusterIP is fine; hostNetwork exposes :53 on the node
+serviceDns:
+  type: ClusterIP
+  port: 53
+
 persistentVolumeClaim:
   enabled: true
   accessModes:
     - ReadWriteOnce
   size: 1Gi
 
-# Resources
 resources:
   requests:
     cpu: 100m
@@ -42,11 +43,10 @@ resources:
     cpu: 500m
     memory: 512Mi
 
-# Environment
 extraEnvVars:
   TZ: "UTC"
-  
-# Ingress (optional, nginx already handles most routing)
+
+# Ingress for web UI (optional if you also use nginx-router)
 ingress:
   enabled: true
   ingressClassName: traefik
@@ -59,18 +59,12 @@ ingress:
       hosts:
         - pihole.mgmt.local
 
-# Monitoring
 monitoring:
   podMonitor:
     enabled: true
     labels:
       cluster: mgmt
       release: kube-prometheus-stack
-
-# 🚨 THIS IS THE IMPORTANT PART 🚨
-pod:
-  hostNetwork: true
-  dnsPolicy: ClusterFirstWithHostNet
 
 # Scheduling
 nodeSelector:
@@ -88,3 +82,14 @@ affinity:
                 values:
                   - prometheus
           topologyKey: kubernetes.io/hostname
+
+# CRITICAL: expose DNS on node port 53
+# (Set in both common locations so the chart definitely picks it up)
+hostNetwork: true
+dnsPolicy: ClusterFirstWithHostNet
+
+pod:
+  hostNetwork: true
+  dnsPolicy: ClusterFirstWithHostNet
+
+# DO NOT re-add podDnsConfig — it was forcing dnsPolicy: None and broke host DNS
