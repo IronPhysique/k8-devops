@@ -1,0 +1,30 @@
+---
+# Service for nginx-router to trigger ExternalDNS
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-router-external
+  namespace: nginx-router
+  annotations:
+    # ExternalDNS annotations - creates DNS A records pointing to your public IP
+    external-dns.alpha.kubernetes.io/hostname: argocd.iron-lab.org,pihole.iron-lab.org,grafana.iron-lab.org,amp.iron-lab.org
+    external-dns.alpha.kubernetes.io/ttl: "300"
+spec:
+  type: LoadBalancer
+  # This will get an external IP from your cloud provider or MetalLB
+  # For home setup, you'll need to configure your router to forward ports 80/443
+  # to your cluster IP (192.168.178.144)
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: 443
+    protocol: TCP
+  selector:
+    app: nginx-router
+  # Use the mgmt cluster node IP as the external IP
+  externalIPs:
+    - 192.168.178.144

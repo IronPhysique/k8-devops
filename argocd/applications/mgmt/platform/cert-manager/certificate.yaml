@@ -1,0 +1,30 @@
+---
+# Let's Encrypt Certificate for iron-lab.org domains
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: iron-lab-org-tls
+  namespace: nginx-router
+spec:
+  # Secret name where certificate will be stored
+  secretName: iron-lab-org-tls
+
+  # Use Let's Encrypt production issuer
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+
+  # Common name
+  commonName: "*.iron-lab.org"
+
+  # DNS names covered by this certificate
+  dnsNames:
+    - iron-lab.org
+    - "*.iron-lab.org"
+    - argocd.iron-lab.org
+    - pihole.iron-lab.org
+    - grafana.iron-lab.org
+    - amp.iron-lab.org
+
+  # Renew certificate 30 days before expiry
+  renewBefore: 720h  # 30 days

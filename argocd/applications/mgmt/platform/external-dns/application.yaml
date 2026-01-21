@@ -1,0 +1,71 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-dns
+  namespace: argocd
+spec:
+  project: mgmt-platform
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: external-dns
+
+  source:
+    repoURL: https://kubernetes-sigs.github.io/external-dns
+    chart: external-dns
+    targetRevision: 1.15.0
+    helm:
+      values: |
+        provider: cloudflare
+
+        env:
+          - name: CF_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: cloudflare-api-token
+                key: api-token
+
+        # Only manage specific domain
+        domainFilters:
+          - iron-lab.org
+
+        # Sync policy
+        policy: sync  # Can be 'sync' or 'upsert-only'
+
+        # TXT record ownership
+        txtOwnerId: homelab-mgmt-cluster
+
+        # Resource types to watch
+        sources:
+          - service
+          - ingress
+
+        # Annotation filter (optional - only sync annotated resources)
+        # annotationFilter: "external-dns.alpha.kubernetes.io/hostname"
+
+        # Logging
+        logLevel: info
+        logFormat: text
+
+        # Interval for syncing
+        interval: 5m
+
+        # Trigger sync on events
+        triggerLoopOnEvent: true
+
+        # Resources
+        resources:
+          requests:
+            cpu: 25m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

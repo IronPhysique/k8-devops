@@ -32,7 +32,7 @@ data:
         server {
             listen 80;
             listen 443 ssl;
-            server_name pihole.home pihole.local;
+            server_name pihole.home pihole.local pihole.iron-lab.org;
 
             ssl_certificate /etc/nginx/certs/tls.crt;
             ssl_certificate_key /etc/nginx/certs/tls.key;
@@ -50,7 +50,7 @@ data:
         server {
             listen 80;
             listen 443 ssl;
-            server_name argocd.home argocd.local;
+            server_name argocd.home argocd.local argocd.iron-lab.org;
 
             ssl_certificate /etc/nginx/certs/tls.crt;
             ssl_certificate_key /etc/nginx/certs/tls.key;
@@ -71,7 +71,7 @@ data:
         server {
             listen 80;
             listen 443 ssl;
-            server_name grafana.home grafana.local;
+            server_name grafana.home grafana.local grafana.iron-lab.org;
 
             ssl_certificate /etc/nginx/certs/tls.crt;
             ssl_certificate_key /etc/nginx/certs/tls.key;
@@ -89,7 +89,7 @@ data:
         server {
             listen 80;
             listen 443 ssl;
-            server_name amp.home amp.local;
+            server_name amp.home amp.local amp.iron-lab.org;
 
             ssl_certificate /etc/nginx/certs/tls.crt;
             ssl_certificate_key /etc/nginx/certs/tls.key;
@@ -106,7 +106,7 @@ data:
         # Default server - return 404
         server {
             listen 80 default_server;
-            listen 8443 ssl default_server;
+            listen 443 ssl default_server;
             server_name _;
 
             ssl_certificate /etc/nginx/certs/tls.crt;
