@@ -4,9 +4,17 @@ loki:
 
   commonConfig:
     replication_factor: 1
+    path_prefix: /var/loki
 
   storage:
     type: filesystem
+    bucketNames:
+      chunks: chunks
+      ruler: ruler
+      admin: admin
+    filesystem:
+      chunks_directory: /var/loki/chunks
+      rules_directory: /var/loki/rules
 
   schemaConfig:
     configs:
