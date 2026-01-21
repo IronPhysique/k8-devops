@@ -4,5 +4,25 @@ dnsHostPort:
   enabled: false
   port: 53
 
-# Required for hostPort DNS on K3s
-hostNetwork: true
+# Use NodePort instead of hostNetwork to avoid port conflicts
+hostNetwork: false
+
+# Use NodePort for web UI to avoid conflict with nginx-router on port 80
+service:
+  type: NodePort
+  dns:
+    port: 53
+    nodePort: 30053
+  web:
+    http:
+      port: 80
+      nodePort: 30080
+    https:
+      port: 443
+      nodePort: 30443
+
+# DNS configuration
+dnsPolicy: ClusterFirst
+
+# Web UI port (since we can't use 80 with hostNetwork)
+webHttp: "8080"
