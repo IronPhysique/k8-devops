@@ -8,8 +8,6 @@ image:
 DNS1: "1.1.1.1"
 DNS2: "1.0.0.1"
 
-adminPassword: "changeme" # replace with SealedSecret later
-
 # DNS service (internal only, hostNetwork does the real exposure)
 serviceDns:
   type: ClusterIP
@@ -47,9 +45,7 @@ resources:
 # Environment
 extraEnvVars:
   TZ: "UTC"
-  WEBPASSWORD: "changeme"
-  PIHOLE_DNS_: "1.1.1.1;1.0.0.1"
-
+  
 # Ingress (optional, nginx already handles most routing)
 ingress:
   enabled: true
