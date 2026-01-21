@@ -18,13 +18,10 @@ spec:
   commonName: "*.iron-lab.org"
 
   # DNS names covered by this certificate
+  # Wildcard *.iron-lab.org covers all subdomains, so no need to list them explicitly
   dnsNames:
     - iron-lab.org
     - "*.iron-lab.org"
-    - argocd.iron-lab.org
-    - pihole.iron-lab.org
-    - grafana.iron-lab.org
-    - amp.iron-lab.org
 
   # Renew certificate 30 days before expiry
   renewBefore: 720h  # 30 days
