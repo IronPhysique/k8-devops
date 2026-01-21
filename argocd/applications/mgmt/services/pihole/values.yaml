@@ -23,10 +23,10 @@ service:
 # Custom DNS entries for home domains
 dnsmasq:
   additionalHostsEntries:
-    - 192.168.178.144 argocd.home
-    - 192.168.178.144 pihole.home
-    - 192.168.178.144 grafana.home
-    - 192.168.178.144 amp.home
+    - "192.168.178.144 argocd.home"
+    - "192.168.178.144 pihole.home"
+    - "192.168.178.144 grafana.home"
+    - "192.168.178.144 amp.home"
   customSettings: |
     # Override interface restriction - listen on all except loopback
     except-interface=lo
