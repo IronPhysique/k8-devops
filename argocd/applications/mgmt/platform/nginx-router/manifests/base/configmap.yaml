@@ -31,7 +31,7 @@ data:
         # Pi-hole Web UI
         server {
             listen 80;
-            listen 443 ssl;
+            listen 8443 ssl;
             server_name pihole.home pihole.local;
 
             ssl_certificate /etc/nginx/certs/tls.crt;
@@ -49,7 +49,7 @@ data:
         # ArgoCD UI
         server {
             listen 80;
-            listen 443 ssl;
+            listen 8443 ssl;
             server_name argocd.home argocd.local;
 
             ssl_certificate /etc/nginx/certs/tls.crt;
@@ -70,7 +70,7 @@ data:
         # Grafana UI
         server {
             listen 80;
-            listen 443 ssl;
+            listen 8443 ssl;
             server_name grafana.home grafana.local;
 
             ssl_certificate /etc/nginx/certs/tls.crt;
@@ -88,7 +88,7 @@ data:
         # AMP (Application Management Panel)
         server {
             listen 80;
-            listen 443 ssl;
+            listen 8443 ssl;
             server_name amp.home amp.local;
 
             ssl_certificate /etc/nginx/certs/tls.crt;
@@ -106,7 +106,7 @@ data:
         # Default server - return 404
         server {
             listen 80 default_server;
-            listen 443 ssl default_server;
+            listen 8443 ssl default_server;
             server_name _;
 
             ssl_certificate /etc/nginx/certs/tls.crt;

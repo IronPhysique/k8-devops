@@ -24,7 +24,7 @@ spec:
         ports:
         - containerPort: 80
           protocol: TCP
-        - containerPort: 443
+        - containerPort: 8443
           protocol: TCP
         volumeMounts:
         - name: nginx-config
