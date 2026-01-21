@@ -25,7 +25,6 @@ dnsmasq:
     - 192.168.178.144 pihole.local
     - 192.168.178.144 grafana.local
   customSettings:
-    # Listen on all interfaces (required for hostNetwork mode)
-    interface: ""
-    # Or use:
-    except-interface: lo
+    # Override interface restriction - listen on all except loopback
+    03-custom-interface.conf: |
+      except-interface=lo
