@@ -48,6 +48,7 @@ test-cluster/
 secrets/*-plain.yaml
 .env
 .envrc
+config.env  # Contains actual IPs - do not commit
 
 # Keep sealed secrets (encrypted, safe for Git)
 !*-sealed.yaml
