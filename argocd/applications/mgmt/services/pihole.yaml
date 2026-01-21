@@ -1,0 +1,38 @@
+---
+# Pi-hole DNS server on mgmt cluster
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pihole
+  namespace: argocd
+spec:
+  project: mgmt-platform
+  source:
+    repoURL: https://mojo2600.github.io/pihole-kubernetes
+    chart: pihole
+    targetRevision: 2.26.1
+    helm:
+      valueFiles:
+        - '$values/argocd/clusters/mgmt/pihole-values.yaml'
+  sources:
+    - repoURL: https://mojo2600.github.io/pihole-kubernetes
+      chart: pihole
+      targetRevision: 2.26.1
+    - repoURL: git@github.com:IronPhysique/k8-devops.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: pihole
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m

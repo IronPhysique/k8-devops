@@ -54,12 +54,15 @@ homelab/
 │   ├── argocd-install.yaml            # Argo CD installation
 │   └── root-app.yaml                  # App-of-Apps pattern entry point
 ├── argocd/
-│   ├── projects.yaml                  # AppProjects (mgmt, apps, applications)
-│   ├── applicationsets/
-│   │   ├── mgmt-platform.yaml         # Platform for mgmt cluster
-│   │   └── apps-platform.yaml         # Platform for apps cluster
+│   ├── bootstrap/
+│   │   ├── projects.yaml              # AppProjects (mgmt, apps, applications)
+│   │   └── root-app.yaml              # Root applications for both clusters
 │   └── applications/
-│       └── pihole.yaml                # Pi-hole Application
+│       ├── mgmt/
+│       │   ├── platform/              # Platform apps (cert-manager, prometheus, etc)
+│       │   └── services/              # Service apps (pihole, etc)
+│       └── apps/
+│           └── platform/              # Platform apps for apps cluster
 ├── clusters/
 │   ├── mgmt/
 │   │   ├── sealed-secrets-values.yaml
@@ -114,7 +117,7 @@ Developer → Git Commit → GitHub → Argo CD → Kubernetes Cluster
 ### ApplicationSet Pattern
 
 ```yaml
-# argocd/applicationsets/mgmt-platform.yaml
+# argocd/applications/mgmt/platform/kube-prometheus-stack.yaml
 # Defines ALL platform components for mgmt cluster
 # - sealed-secrets
 # - cert-manager
@@ -324,7 +327,7 @@ See [docs/secrets-management.md](secrets-management.md)
 
 ```bash
 # Update chart version in Git
-vim argocd/applicationsets/mgmt-platform.yaml
+vim argocd/applications/mgmt/platform/kube-prometheus-stack.yaml
 # Change version: 67.7.0 → 68.0.0
 
 # Commit

@@ -12,13 +12,13 @@ Complete guide to your homelab platform.
 
 ### Phase-by-Phase Setup
 
-1. **[Bootstrap Management Cluster](runbooks/01-bootstrap-mgmt.sh)**
+1. **[Bootstrap Management Cluster](../bootstrap/01-bootstrap-mgmt.sh)**
    - Install k3s on Raspberry Pi 5
    - Install Argo CD
    - Deploy platform components
    - ~15 minutes
 
-2. **[Bootstrap Apps Cluster](runbooks/02-bootstrap-apps.sh)**
+2. **[Bootstrap Apps Cluster](../bootstrap/02-bootstrap-apps.sh)**
    - Install k3s on Office PC
    - Register with Argo CD
    - Deploy platform components
@@ -99,16 +99,24 @@ homelab/
 ├── README.md                    # Project overview
 ├── .gitignore                   # Protect secrets
 │
-├── bootstrap/                   # Initial installation
-│   ├── argocd-install.yaml     # Argo CD setup
-│   └── root-app.yaml           # GitOps entry point
+├── bootstrap/                   # Cluster bootstrap
+│   ├── 01-bootstrap-mgmt.sh    # Management cluster setup script
+│   ├── 02-bootstrap-apps.sh    # Apps cluster setup script
+│   ├── argocd-install.yaml     # ArgoCD configuration
+│   └── root-app.yaml           # Root Application (GitOps entry point)
 │
 ├── argocd/                      # GitOps configuration
-│   ├── projects.yaml           # AppProjects
-│   ├── applicationsets/        # Platform components
-│   └── applications/           # Individual apps
+│   ├── bootstrap/              # Foundation (projects + root app)
+│   │   ├── projects.yaml       # AppProjects
+│   │   └── root-app.yaml       # Root application
+│   └── applications/           # Individual apps by cluster
+│       ├── mgmt/               # Management cluster apps
+│       │   ├── platform/       # Infrastructure (cert-manager, prometheus, etc)
+│       │   └── services/       # Services (pihole, etc)
+│       └── apps/               # Apps cluster apps
+│           └── platform/       # Infrastructure
 │
-├── clusters/                    # Per-cluster config
+├── argocd/clusters/                    # Per-cluster config
 │   ├── mgmt/                   # Management cluster
 │   │   ├── *-values.yaml       # Helm values
 │   │   ├── *-clusterissuer.yaml
@@ -131,8 +139,6 @@ homelab/
     ├── IMPLEMENTATION_SUMMARY.md
     ├── TABLE_OF_CONTENTS.md (this file)
     └── runbooks/               # Operational procedures
-        ├── 01-bootstrap-mgmt.sh
-        ├── 02-bootstrap-apps.sh
         ├── 03-configure-cross-cluster-monitoring.md
         ├── add-node.md
         ├── rebuild-mgmt.md
@@ -150,10 +156,10 @@ homelab/
 |-----------|---------|---------------|-------------|
 | k3s | v1.28+ | https://docs.k3s.io | N/A (script install) |
 | Argo CD | v2.12+ | https://argo-cd.readthedocs.io | bootstrap/argocd-install.yaml |
-| kube-prometheus-stack | 67.7.0 | https://github.com/prometheus-community/helm-charts | clusters/mgmt/prometheus-values.yaml |
-| Sealed Secrets | v0.27.4 | https://sealed-secrets.netlify.app | clusters/mgmt/sealed-secrets-values.yaml |
-| cert-manager | v1.16.2 | https://cert-manager.io/docs | clusters/mgmt/cert-manager-values.yaml |
-| Pi-hole | 2024.07.0 | https://docs.pi-hole.net | clusters/mgmt/pihole-values.yaml |
+| kube-prometheus-stack | 67.7.0 | https://github.com/prometheus-community/helm-charts | argocd/clusters/mgmt/prometheus-values.yaml |
+| Sealed Secrets | v0.27.4 | https://sealed-secrets.netlify.app | argocd/clusters/mgmt/sealed-secrets-values.yaml |
+| cert-manager | v1.16.2 | https://cert-manager.io/docs | argocd/clusters/mgmt/cert-manager-values.yaml |
+| Pi-hole | 2024.07.0 | https://docs.pi-hole.net | argocd/clusters/mgmt/pihole-values.yaml |
 | Traefik | v3.0+ | https://doc.traefik.io/traefik | Bundled with k3s |
 
 ### Apps Cluster Components
@@ -171,30 +177,19 @@ homelab/
 ### App-of-Apps Pattern
 
 ```
-root Application (syncs argocd/ directory)
+root Application (syncs argocd/bootstrap/)
 ├── projects.yaml (AppProjects)
-├── ApplicationSets (generate multiple apps)
-│   ├── mgmt-platform (sealed-secrets, cert-manager, prometheus, promtail)
-│   └── apps-platform (sealed-secrets, cert-manager, prometheus, promtail)
-└── Individual Applications (pihole, etc.)
+├── mgmt-root Application (syncs argocd/applications/mgmt/)
+│   ├── platform/ (sealed-secrets, cert-manager, prometheus, alloy, nginx)
+│   └── services/ (pihole, etc)
+└── apps-root Application (syncs argocd/applications/apps/)
+    └── platform/ (sealed-secrets, cert-manager, prometheus, alloy)
 ```
 
-**Benefit:** Single `kubectl apply -f bootstrap/root-app.yaml` deploys everything.
-
-### ApplicationSet Pattern
-
-```yaml
-# Defines list of components
-elements:
-  - name: sealed-secrets
-    chart: sealed-secrets
-    version: 2.16.2
-  - name: cert-manager
-    chart: cert-manager
-    version: v1.16.2
-```
-
-**Benefit:** Add component to list → Argo auto-creates Application.
+**Benefit:**
+- Single `kubectl apply -f bootstrap/root-app.yaml` deploys everything
+- Each app has its own YAML file for better readability
+- Clear separation between platform and services
 
 ## Troubleshooting
 
@@ -214,7 +209,7 @@ argocd app sync <app-name> --prune
 
 # Delete and recreate
 kubectl delete application <app-name> -n argocd
-kubectl apply -f argocd/applicationsets/...
+kubectl apply -f argocd/applications/mgmt/platform/<app-name>.yaml
 ```
 
 #### Pod Not Starting
@@ -379,7 +374,7 @@ Found a bug or have an improvement?
 git checkout -b feature/my-improvement
 
 # Make changes
-vim clusters/mgmt/something.yaml
+vim argocd/clusters/mgmt/something.yaml
 
 # Commit
 git commit -am "Improve something"

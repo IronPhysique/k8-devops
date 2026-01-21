@@ -215,9 +215,10 @@ EOF_ARGO_INGRESS
 echo "Argo CD UI: http://${MGMT_IP} (or http://argocd.mgmt.local if DNS configured)"
 
 ########################################################
-# Step 6: Deploy the root Application (GitOps bootstrap)
+# Step 6: Deploy AppProjects and root Application (GitOps bootstrap)
 ########################################################
-echo "[6/6] Deploying root Application..."
+echo "[6/6] Deploying AppProjects and root Application..."
+kubectl apply -f "$PROJECT_ROOT/argocd/bootstrap/projects.yaml"
 sed "s|YOUR_USERNAME|${GITHUB_USERNAME}|g" "$PROJECT_ROOT/bootstrap/root-app.yaml" | kubectl apply -f -
 
 echo ""

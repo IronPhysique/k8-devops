@@ -1,0 +1,42 @@
+---
+# Kube Prometheus Stack for mgmt cluster
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mgmt-kube-prometheus-stack
+  namespace: argocd
+  labels:
+    cluster: mgmt
+    component: platform
+spec:
+  project: mgmt-platform
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 67.7.0
+    helm:
+      valueFiles:
+        - '$values/argocd/clusters/mgmt/prometheus-values.yaml'
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      targetRevision: 67.7.0
+    - repoURL: git@github.com:IronPhysique/k8-devops.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m

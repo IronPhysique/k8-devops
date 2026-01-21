@@ -13,12 +13,10 @@ DNS2: "1.0.0.1"
 # Admin password (use SealedSecret in production)
 adminPassword: "changeme"  # CHANGE THIS
 
-# Service configuration - use LoadBalancer for LAN access
+# Service configuration - use ClusterIP with hostPort for direct access
 serviceDns:
-  type: LoadBalancer
+  type: ClusterIP
   port: 53
-  annotations:
-    metallb.universe.tf/allow-shared-ip: pihole-svc
 
 serviceDhcp:
   enabled: false
@@ -100,3 +98,7 @@ affinity:
 # Node selector for ARM64
 nodeSelector:
   kubernetes.io/arch: arm64
+
+# Use host network to bind directly to node's port 53
+hostNetwork: true
+dnsPolicy: ClusterFirstWithHostNet

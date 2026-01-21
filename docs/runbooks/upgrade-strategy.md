@@ -119,7 +119,7 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2
 
 ## 3. Upgrading Helm Charts (Platform Components)
 
-All platform charts are managed via ApplicationSets in Git.
+All platform charts are managed via individual Application files in Git.
 
 ### Check Current Versions
 
@@ -145,7 +145,7 @@ cd ~/homelab
 helm search repo prometheus-community/kube-prometheus-stack --versions | head
 
 # 2. Update ApplicationSet in Git
-vim argocd/applicationsets/mgmt-platform.yaml
+vim argocd/applications/mgmt/platform/kube-prometheus-stack.yaml
 
 # Change:
 #   version: 67.7.0
@@ -153,7 +153,7 @@ vim argocd/applicationsets/mgmt-platform.yaml
 #   version: 68.0.0
 
 # 3. Commit and push
-git add argocd/applicationsets/mgmt-platform.yaml
+git add argocd/applications/mgmt/platform/kube-prometheus-stack.yaml
 git commit -m "Upgrade kube-prometheus-stack to 68.0.0"
 git push origin main
 
@@ -170,11 +170,11 @@ To upgrade all platform charts to latest versions:
 
 ```bash
 # Update all chart versions in ApplicationSets
-vim argocd/applicationsets/mgmt-platform.yaml
-vim argocd/applicationsets/apps-platform.yaml
+vim argocd/applications/mgmt/platform/kube-prometheus-stack.yaml
+vim argocd/applications/apps/platform/*.yaml
 
 # Commit
-git add argocd/applicationsets/
+git add argocd/applications/
 git commit -m "Upgrade all platform charts"
 git push origin main
 
@@ -208,7 +208,7 @@ For custom image tags in values files:
 cd ~/homelab
 
 # Update image tag in values
-vim clusters/mgmt/prometheus-values.yaml
+vim argocd/clusters/mgmt/prometheus-values.yaml
 
 # Example:
 # prometheus:
@@ -217,7 +217,7 @@ vim clusters/mgmt/prometheus-values.yaml
 #       tag: v2.56.2  # Change to v2.57.0
 
 # Commit
-git add clusters/mgmt/prometheus-values.yaml
+git add argocd/clusters/mgmt/prometheus-values.yaml
 git commit -m "Upgrade Prometheus image to v2.57.0"
 git push origin main
 ```
@@ -228,7 +228,7 @@ For your own app deployments:
 
 ```bash
 # Update image in app manifest
-vim clusters/apps/app-workloads/myapp.yaml
+vim argocd/clusters/apps/app-workloads/myapp.yaml
 
 # Change:
 # image: myapp:v1.0.0
@@ -236,7 +236,7 @@ vim clusters/apps/app-workloads/myapp.yaml
 # image: myapp:v1.1.0
 
 # Commit
-git add clusters/apps/app-workloads/myapp.yaml
+git add argocd/clusters/apps/app-workloads/myapp.yaml
 git commit -m "Upgrade myapp to v1.1.0"
 git push origin main
 ```
@@ -253,7 +253,7 @@ Before upgrading production:
 # Render chart with new version
 helm template test-release prometheus-community/kube-prometheus-stack \
   --version 68.0.0 \
-  --values clusters/mgmt/prometheus-values.yaml \
+  --values argocd/clusters/mgmt/prometheus-values.yaml \
   > /tmp/new-prometheus.yaml
 
 # Compare with current

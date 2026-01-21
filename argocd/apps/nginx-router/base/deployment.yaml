@@ -1,0 +1,43 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-router
+  namespace: nginx-router
+  labels:
+    app: nginx-router
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-router
+  template:
+    metadata:
+      labels:
+        app: nginx-router
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: nginx-router-config
+      nodeSelector:
+        kubernetes.io/arch: arm64

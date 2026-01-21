@@ -25,8 +25,8 @@ find . -name "*.yaml" -exec sed -i "s/YOUR_USERNAME/${GITHUB_USERNAME}/g" {} +
 git add . && git commit -m "Configure" && git push
 
 # 3. Deploy
-./docs/runbooks/01-bootstrap-mgmt.sh
-./docs/runbooks/02-bootstrap-apps.sh
+./bootstrap/01-bootstrap-mgmt.sh
+./bootstrap/02-bootstrap-apps.sh
 ```
 
 Access: `http://controller.local` (Argo CD)
@@ -48,11 +48,12 @@ Access: `http://controller.local` (Argo CD)
 - **Sealed Secrets**: Encrypted secrets
 - **Pi-hole**: DNS + ad-blocking
 
-## Docs
+## Documentation
 
-- [START_HERE.md](START_HERE.md) - Get running fast
-- [QUICK_REFERENCE.md](QUICK_REFERENCE.md) - Common commands
-- [docs/](docs/) - Full guides and runbooks
+- [STRUCTURE.md](STRUCTURE.md) - Repository organization guide
+- [argocd/README.md](argocd/README.md) - ArgoCD usage guide
+- [docs/TABLE_OF_CONTENTS.md](docs/TABLE_OF_CONTENTS.md) - Complete documentation index
+- [CHANGELOG.md](CHANGELOG.md) - Recent changes
 
 ## What You'll Learn
 
