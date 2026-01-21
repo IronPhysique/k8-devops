@@ -23,3 +23,8 @@ dnsmasq:
     - 192.168.178.144 argocd.local
     - 192.168.178.144 pihole.local
     - 192.168.178.144 grafana.local
+  customSettings:
+    # Listen on all interfaces (required for hostNetwork mode)
+    interface: ""
+    # Or use:
+    except-interface: lo
