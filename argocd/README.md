@@ -9,22 +9,46 @@ argocd/
 ├── bootstrap/                      # Foundation resources
 │   ├── projects.yaml              # AppProjects for mgmt, apps, and applications
 │   └── root-app.yaml              # Root applications that bootstrap everything
-├── applications/                   # Application definitions organized by cluster
+├── applications/                   # Application definitions (each app in its own directory)
 │   ├── mgmt/                      # Management cluster applications
 │   │   ├── platform/              # Infrastructure/platform components
-│   │   │   ├── sealed-secrets.yaml
-│   │   │   ├── cert-manager.yaml
-│   │   │   ├── kube-prometheus-stack.yaml
-│   │   │   ├── alloy.yaml
-│   │   │   └── nginx-router.yaml
+│   │   │   ├── kube-prometheus-stack/
+│   │   │   │   ├── application.yaml         # ArgoCD Application definition
+│   │   │   │   ├── values.yaml              # Helm values
+│   │   │   │   └── grafana-datasource-apps.yaml
+│   │   │   ├── cert-manager/
+│   │   │   │   ├── application.yaml
+│   │   │   │   ├── values.yaml
+│   │   │   │   └── clusterissuer.yaml
+│   │   │   ├── sealed-secrets/
+│   │   │   │   ├── application.yaml
+│   │   │   │   └── values.yaml
+│   │   │   ├── alloy/
+│   │   │   │   ├── application.yaml
+│   │   │   │   └── values.yaml
+│   │   │   └── nginx-router/
+│   │   │       └── application.yaml
 │   │   └── services/              # Service applications
-│   │       └── pihole.yaml
+│   │       └── pihole/
+│   │           ├── application.yaml
+│   │           ├── values.yaml
+│   │           └── traefik.yaml
 │   └── apps/                      # Apps cluster applications
 │       └── platform/              # Infrastructure/platform components
-│           ├── sealed-secrets.yaml
-│           ├── cert-manager.yaml
-│           ├── kube-prometheus-stack.yaml
-│           └── alloy.yaml
+│           ├── kube-prometheus-stack/
+│           │   ├── application.yaml
+│           │   ├── values.yaml
+│           │   └── ingress.yaml
+│           ├── cert-manager/
+│           │   ├── application.yaml
+│           │   ├── values.yaml
+│           │   └── clusterissuer.yaml
+│           ├── sealed-secrets/
+│           │   ├── application.yaml
+│           │   └── values.yaml
+│           └── alloy/
+│               ├── application.yaml
+│               └── values.yaml
 └── apps/                          # Raw manifests for non-Helm applications
     └── nginx-router/              # Nginx reverse proxy
         └── base/                  # Kustomize base
@@ -49,10 +73,11 @@ This repository uses the **App-of-Apps pattern** for bootstrapping:
    - `apps-platform` - For apps cluster platform components
    - `applications` - For user application workloads
 
-3. **Individual Applications** - Each app has its own YAML file for:
-   - Better readability
-   - Easier maintenance
-   - Clear separation of concerns
+3. **Individual Applications** - Each app has its own directory containing ALL related files:
+   - `application.yaml` - ArgoCD Application definition
+   - `values.yaml` - Helm values (for Helm charts)
+   - Additional configs (ClusterIssuers, ConfigMaps, IngressRoutes, etc.)
+   - **Benefits**: No hunting across multiple directories, everything in one place
 
 ### Flow Diagram
 
@@ -89,7 +114,7 @@ User-facing services:
 
 ## Adding a New Application
 
-### 1. Create Application YAML
+### 1. Create App Directory and Files
 
 Choose the appropriate directory based on:
 - **Cluster**: `mgmt/` or `apps/`
@@ -98,11 +123,11 @@ Choose the appropriate directory based on:
 Example: Adding Grafana Loki (Helm chart) to mgmt cluster
 
 ```bash
-# Create Application file
-touch argocd/applications/mgmt/platform/loki.yaml
-```
+# Create app directory
+mkdir -p argocd/applications/mgmt/platform/loki
 
-```yaml
+# Create Application definition
+cat > argocd/applications/mgmt/platform/loki/application.yaml <<'EOF'
 ---
 # Grafana Loki for mgmt cluster
 apiVersion: argoproj.io/v1alpha1
@@ -121,7 +146,7 @@ spec:
     targetRevision: 5.0.0
     helm:
       valueFiles:
-        - '$values/argocd/clusters/mgmt/loki-values.yaml'
+        - '$values/argocd/applications/mgmt/platform/loki/values.yaml'
   sources:
     - repoURL: https://grafana.github.io/helm-charts
       chart: loki
@@ -145,26 +170,29 @@ spec:
         duration: 5s
         factor: 2
         maxDuration: 2m
+EOF
+
+# Create Helm values file
+cat > argocd/applications/mgmt/platform/loki/values.yaml <<'EOF'
+# Loki configuration
+loki:
+  auth_enabled: false
+  storage:
+    type: filesystem
+EOF
 ```
 
-### 2. Create Values File
-
-Create corresponding Helm values file:
+### 2. Commit and Push
 
 ```bash
-touch argocd/clusters/mgmt/loki-values.yaml
-```
-
-### 3. Commit and Push
-
-```bash
-git add argocd/applications/mgmt/platform/loki.yaml
-git add argocd/clusters/mgmt/loki-values.yaml
+git add argocd/applications/mgmt/platform/loki/
 git commit -m "Add Grafana Loki to mgmt cluster"
 git push origin main
 ```
 
 ArgoCD will automatically detect and deploy the new application.
+
+**Note:** Everything for Loki is now in `argocd/applications/mgmt/platform/loki/` - no need to hunt across multiple directories!
 
 ### Adding a Non-Helm Application (Raw Manifests/Kustomize)
 
@@ -213,9 +241,11 @@ For applications that don't use Helm charts, store manifests in `argocd/apps/`:
    EOF
    ```
 
-3. **Create Application definition:**
+3. **Create app directory and Application definition:**
    ```bash
-   cat > argocd/applications/mgmt/services/my-web-service.yaml <<EOF
+   mkdir -p argocd/applications/mgmt/services/my-web-service
+
+   cat > argocd/applications/mgmt/services/my-web-service/application.yaml <<EOF
    ---
    apiVersion: argoproj.io/v1alpha1
    kind: Application
@@ -246,7 +276,7 @@ For applications that don't use Helm charts, store manifests in `argocd/apps/`:
 4. **Commit and push:**
    ```bash
    git add argocd/apps/my-web-service/
-   git add argocd/applications/mgmt/services/my-web-service.yaml
+   git add argocd/applications/mgmt/services/my-web-service/
    git commit -m "Add my-web-service"
    git push origin main
    ```
@@ -255,10 +285,10 @@ For applications that don't use Helm charts, store manifests in `argocd/apps/`:
 
 ### Upgrade Chart Version
 
-Edit the specific application file:
+Edit the application.yaml file:
 
 ```bash
-vim argocd/applications/mgmt/platform/kube-prometheus-stack.yaml
+vim argocd/applications/mgmt/platform/kube-prometheus-stack/application.yaml
 ```
 
 Change `targetRevision`:
@@ -268,22 +298,22 @@ targetRevision: 68.0.0  # Was 67.7.0
 
 Commit and push:
 ```bash
-git add argocd/applications/mgmt/platform/kube-prometheus-stack.yaml
+git add argocd/applications/mgmt/platform/kube-prometheus-stack/application.yaml
 git commit -m "Upgrade kube-prometheus-stack to 68.0.0"
 git push origin main
 ```
 
 ### Update Configuration
 
-Edit the values file:
+Edit the values file (in the same directory as application.yaml):
 
 ```bash
-vim argocd/clusters/mgmt/prometheus-values.yaml
+vim argocd/applications/mgmt/platform/kube-prometheus-stack/values.yaml
 ```
 
 Make changes, then commit:
 ```bash
-git add argocd/clusters/mgmt/prometheus-values.yaml
+git add argocd/applications/mgmt/platform/kube-prometheus-stack/values.yaml
 git commit -m "Update Prometheus retention to 30 days"
 git push origin main
 ```
@@ -310,15 +340,15 @@ argocd app sync mgmt-kube-prometheus-stack
 
 ### Delete Application
 
-Remove the YAML file and commit:
+Remove the app directory and commit:
 
 ```bash
-git rm argocd/applications/mgmt/platform/loki.yaml
+git rm -r argocd/applications/mgmt/platform/loki/
 git commit -m "Remove Loki from mgmt cluster"
 git push origin main
 ```
 
-ArgoCD will automatically prune the application.
+ArgoCD will automatically prune the application and all its resources.
 
 ## Troubleshooting
 
@@ -367,38 +397,48 @@ helm repo update
 
 ## Best Practices
 
-1. **One app per file**: Each application gets its own YAML file
-2. **Meaningful names**: Use format `<cluster>-<app-name>` (e.g., `mgmt-prometheus`)
-3. **Labels**: Always include `cluster` and `component` labels
-4. **Automated sync**: Enable `automated: {prune: true, selfHeal: true}` for GitOps
-5. **Values in argocd/clusters/**: Keep Helm values in `argocd/clusters/` directory, not inline
-6. **Test upgrades**: Use `argocd app diff` before syncing major changes
+1. **One app per directory**: Each application gets its own directory with all related files
+2. **Meaningful names**: Use format `<cluster>-<app-name>` for Application metadata (e.g., `mgmt-kube-prometheus-stack`)
+3. **Consistent file names**: Always use `application.yaml` and `values.yaml`
+4. **Labels**: Always include `cluster` and `component` labels
+5. **Automated sync**: Enable `automated: {prune: true, selfHeal: true}` for GitOps
+6. **Keep it together**: Put ALL app-related files in the app directory (values, configs, etc.)
+7. **Test upgrades**: Use `argocd app diff` before syncing major changes
 
 ## Migration Notes
 
-### From ApplicationSets to Individual Applications
+### From Centralized to Consolidated Structure
 
-This repository was restructured from ApplicationSets to individual Application files for:
-- **Better readability**: Each app is self-contained
-- **Easier maintenance**: Update one file vs. editing list entries
-- **Clearer structure**: Platform vs. services separation
-- **Better git history**: Changes to one app don't touch others
+This repository was restructured to consolidate all app files in one place:
 
-Old structure:
+**Old structure:**
 ```
 argocd/
-├── applicationsets/
-│   ├── mgmt-platform.yaml  # All mgmt platform apps in one file
-│   └── apps-platform.yaml  # All apps platform apps in one file
+├── applications/
+│   └── mgmt/platform/
+│       └── kube-prometheus-stack.yaml  # Just the Application definition
+└── clusters/
+    └── mgmt/
+        ├── prometheus-values.yaml      # Values elsewhere
+        └── grafana-datasource-apps.yaml # Configs elsewhere
 ```
 
-New structure:
+**New structure:**
 ```
 argocd/
 └── applications/
-    ├── mgmt/platform/      # Individual files per app
-    └── apps/platform/      # Individual files per app
+    └── mgmt/platform/
+        └── kube-prometheus-stack/      # Everything in ONE place
+            ├── application.yaml
+            ├── values.yaml
+            └── grafana-datasource-apps.yaml
 ```
+
+**Benefits:**
+- **No hunting**: Everything for an app is in ONE directory
+- **Easy updates**: Edit all files for an app in one location
+- **Better organization**: Clear ownership and boundaries
+- **Simpler paths**: `$values/argocd/applications/.../app/values.yaml` instead of `$values/argocd/clusters/.../app-values.yaml`
 
 ## References
 

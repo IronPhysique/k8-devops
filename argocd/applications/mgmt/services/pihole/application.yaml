@@ -1,39 +1,35 @@
 ---
-# Kube Prometheus Stack for mgmt cluster
+# Pi-hole DNS server on mgmt cluster
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: mgmt-kube-prometheus-stack
+  name: pihole
   namespace: argocd
-  labels:
-    cluster: mgmt
-    component: platform
 spec:
   project: mgmt-platform
   source:
-    repoURL: https://prometheus-community.github.io/helm-charts
-    chart: kube-prometheus-stack
-    targetRevision: 67.7.0
+    repoURL: https://mojo2600.github.io/pihole-kubernetes
+    chart: pihole
+    targetRevision: 2.26.1
     helm:
       valueFiles:
-        - '$values/argocd/clusters/mgmt/prometheus-values.yaml'
+        - '$values/argocd/applications/mgmt/services/pihole/values.yaml'
   sources:
-    - repoURL: https://prometheus-community.github.io/helm-charts
-      chart: kube-prometheus-stack
-      targetRevision: 67.7.0
+    - repoURL: https://mojo2600.github.io/pihole-kubernetes
+      chart: pihole
+      targetRevision: 2.26.1
     - repoURL: git@github.com:IronPhysique/k8-devops.git
       targetRevision: main
       ref: values
   destination:
     server: https://kubernetes.default.svc
-    namespace: monitoring
+    namespace: pihole
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      - ServerSideApply=true
     retry:
       limit: 3
       backoff:

@@ -1,35 +1,39 @@
 ---
-# Pi-hole DNS server on mgmt cluster
+# Grafana Alloy for mgmt cluster
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: pihole
+  name: mgmt-alloy
   namespace: argocd
+  labels:
+    cluster: mgmt
+    component: platform
 spec:
   project: mgmt-platform
   source:
-    repoURL: https://mojo2600.github.io/pihole-kubernetes
-    chart: pihole
-    targetRevision: 2.26.1
+    repoURL: https://grafana.github.io/helm-charts
+    chart: alloy
+    targetRevision: 0.11.0
     helm:
       valueFiles:
-        - '$values/argocd/clusters/mgmt/pihole-values.yaml'
+        - '$values/argocd/applications/mgmt/platform/alloy/values.yaml'
   sources:
-    - repoURL: https://mojo2600.github.io/pihole-kubernetes
-      chart: pihole
-      targetRevision: 2.26.1
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: alloy
+      targetRevision: 0.11.0
     - repoURL: git@github.com:IronPhysique/k8-devops.git
       targetRevision: main
       ref: values
   destination:
     server: https://kubernetes.default.svc
-    namespace: pihole
+    namespace: monitoring
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
     retry:
       limit: 3
       backoff:

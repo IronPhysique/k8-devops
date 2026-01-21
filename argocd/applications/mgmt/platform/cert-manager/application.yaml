@@ -1,9 +1,9 @@
 ---
-# Grafana Alloy for mgmt cluster
+# Cert Manager for mgmt cluster
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: mgmt-alloy
+  name: mgmt-cert-manager
   namespace: argocd
   labels:
     cluster: mgmt
@@ -11,22 +11,22 @@ metadata:
 spec:
   project: mgmt-platform
   source:
-    repoURL: https://grafana.github.io/helm-charts
-    chart: alloy
-    targetRevision: 0.11.0
+    repoURL: https://charts.jetstack.io
+    chart: cert-manager
+    targetRevision: v1.16.2
     helm:
       valueFiles:
-        - '$values/argocd/clusters/mgmt/alloy-values.yaml'
+        - '$values/argocd/applications/mgmt/platform/cert-manager/values.yaml'
   sources:
-    - repoURL: https://grafana.github.io/helm-charts
-      chart: alloy
-      targetRevision: 0.11.0
+    - repoURL: https://charts.jetstack.io
+      chart: cert-manager
+      targetRevision: v1.16.2
     - repoURL: git@github.com:IronPhysique/k8-devops.git
       targetRevision: main
       ref: values
   destination:
     server: https://kubernetes.default.svc
-    namespace: monitoring
+    namespace: cert-manager
   syncPolicy:
     automated:
       prune: true

@@ -11,12 +11,9 @@ This repository uses a **GitOps approach** where all Kubernetes resources are de
 ```
 homelab/
 ├── argocd/                 # All ArgoCD and Kubernetes resources
-│   ├── applications/      # Application definitions
-│   ├── apps/              # Non-Helm app manifests
-│   ├── bootstrap/         # Foundation resources
-│   ├── argocd/clusters/          # Cluster-specific configs (Helm values)
-│   ├── platform/          # (Future) Shared platform templates
-│   └── secrets/           # (Future) Sealed secrets
+│   ├── applications/      # Application definitions (each app in its own directory)
+│   ├── apps/              # Non-Helm app manifests (nginx-router, etc.)
+│   └── bootstrap/         # Foundation resources (projects, root apps)
 ├── bootstrap/              # Initial cluster setup scripts
 ├── docs/                  # Documentation and runbooks
 └── examples/              # Example applications
@@ -34,65 +31,90 @@ argocd/
 │   ├── projects.yaml     # AppProjects (mgmt-platform, apps-platform, applications)
 │   └── root-app.yaml     # Root applications that bootstrap everything
 │
-├── applications/          # Application definitions (what to deploy)
+├── applications/          # Application definitions (each app in its own directory)
 │   ├── mgmt/             # Management cluster apps
-│   │   ├── platform/     # Infrastructure (sealed-secrets, cert-manager, etc.)
-│   │   └── services/     # Services (pihole, etc.)
+│   │   ├── platform/     # Infrastructure components
+│   │   │   ├── kube-prometheus-stack/
+│   │   │   │   ├── application.yaml         # ArgoCD Application definition
+│   │   │   │   ├── values.yaml              # Helm values
+│   │   │   │   └── grafana-datasource-apps.yaml  # Additional configs
+│   │   │   ├── cert-manager/
+│   │   │   │   ├── application.yaml
+│   │   │   │   ├── values.yaml
+│   │   │   │   └── clusterissuer.yaml
+│   │   │   ├── sealed-secrets/
+│   │   │   ├── alloy/
+│   │   │   └── nginx-router/
+│   │   └── services/     # Services
+│   │       └── pihole/
+│   │           ├── application.yaml
+│   │           ├── values.yaml
+│   │           └── traefik.yaml
 │   └── apps/             # Apps cluster apps
 │       └── platform/     # Infrastructure
+│           ├── kube-prometheus-stack/
+│           ├── cert-manager/
+│           ├── sealed-secrets/
+│           └── alloy/
 │
-└── apps/                  # Raw manifests (Kustomize/plain YAML)
-    └── nginx-router/      # Non-Helm apps go here
+└── apps/                  # Raw manifests for non-Helm applications
+    └── nginx-router/      # Kustomize/plain YAML apps
         └── base/
+            ├── namespace.yaml
+            ├── configmap.yaml
+            ├── deployment.yaml
+            └── kustomization.yaml
 ```
 
 **Key Concepts:**
 
-- **applications/**: Contains ArgoCD `Application` resources (CRDs that tell ArgoCD WHAT to deploy)
-- **apps/**: Contains the actual Kubernetes manifests for non-Helm applications
+- **applications/**: Each app has its OWN directory containing ALL related files:
+  - `application.yaml` - ArgoCD Application definition (what to deploy)
+  - `values.yaml` - Helm values (for Helm charts)
+  - Any additional configs (ClusterIssuers, ConfigMaps, IngressRoutes, etc.)
 
-**Helm vs Non-Helm:**
-- **Helm charts**: Only need an Application definition in `applications/` + values in `argocd/clusters/`
-- **Non-Helm apps**: Need Application definition in `applications/` + manifests in `apps/`
+- **apps/**: Actual Kubernetes manifests for non-Helm applications (nginx-router uses this)
 
-### bootstrap/
+**Important Notes:**
 
-**Purpose:** Initial cluster setup and ArgoCD installation.
+1. **For Helm apps:** Everything lives in `applications/<cluster>/<category>/<app>/`
+   - Example: `applications/mgmt/platform/kube-prometheus-stack/` has application.yaml AND values.yaml
+
+2. **For non-Helm apps:** Split between two locations:
+   - Application definition: `applications/<cluster>/<category>/<app>/application.yaml`
+   - Actual manifests: `apps/<app>/base/*.yaml`
+   - Example: nginx-router has Application def in `applications/mgmt/platform/nginx-router/` but manifests in `apps/nginx-router/base/`
+   - Why? The manifests aren't ArgoCD resources, they're the actual Kubernetes YAML files
+
+**Benefits of This Structure:**
+- **No hunting for Helm apps**: Everything for an app is in ONE place
+- **Clear separation for non-Helm apps**: Application definition vs actual manifests
+- **Easy to find**: Want to see Pi-hole config? Look in `applications/mgmt/services/pihole/`
+- **Clear ownership**: Each directory is self-contained
+- **Better git history**: Changes to one app don't touch other apps
+
+### bootstrap/ (Top-Level)
+
+**Purpose:** ONE-TIME initial cluster setup scripts and ArgoCD installation.
 
 ```
 bootstrap/
+├── 01-bootstrap-mgmt.sh  # Script to set up management cluster
+├── 02-bootstrap-apps.sh  # Script to set up apps cluster
 ├── argocd-install.yaml   # ArgoCD ConfigMaps for configuration
-└── root-app.yaml         # Root Application that syncs argocd/bootstrap/
+└── root-app.yaml         # Entry point Application (points to argocd/bootstrap/)
 ```
 
 **Usage:**
 ```bash
-# Bootstrap management cluster
+# Bootstrap management cluster (run ONCE)
 ./bootstrap/01-bootstrap-mgmt.sh
+
+# This installs k3s, ArgoCD, and applies root-app.yaml
+# The root-app.yaml then syncs argocd/bootstrap/ directory
 ```
 
-### argocd/clusters/
-
-**Purpose:** Cluster-specific configurations, primarily Helm values files.
-
-```
-argocd/clusters/
-├── mgmt/                      # Management cluster config
-│   ├── prometheus-values.yaml
-│   ├── pihole-values.yaml
-│   ├── cert-manager-values.yaml
-│   ├── cert-manager-clusterissuer.yaml
-│   └── *-sealed.yaml          # Encrypted secrets
-│
-└── apps/                      # Apps cluster config
-    ├── prometheus-values.yaml
-    ├── cert-manager-values.yaml
-    └── app-workloads/         # User application configs
-```
-
-**Important:**
-- Helm values referenced by Applications in `argocd/applications/`
-- Each Application uses `$values/argocd/clusters/mgmt/<app>-values.yaml` pattern
+**Important:** This is different from `argocd/bootstrap/` which contains the ArgoCD-managed resources!
 
 ### docs/
 
@@ -101,16 +123,20 @@ argocd/clusters/
 ```
 docs/
 ├── runbooks/
-│   ├── 01-bootstrap-mgmt.sh
-│   ├── 02-bootstrap-apps.sh
+│   ├── 03-configure-cross-cluster-monitoring.md
 │   ├── validate-cluster.sh
 │   ├── upgrade-strategy.md
 │   ├── rebuild-mgmt.md
-│   └── ...
+│   ├── rebuild-apps.md
+│   ├── add-node.md
+│   └── rotate-sealed-secrets.md
 ├── TABLE_OF_CONTENTS.md
 ├── IMPLEMENTATION_SUMMARY.md
+├── secrets-management.md
 └── ...
 ```
+
+**Note:** Bootstrap scripts (`01-bootstrap-mgmt.sh`, `02-bootstrap-apps.sh`) are now in `bootstrap/` directory.
 
 ## GitOps Flow
 
@@ -138,9 +164,9 @@ Deploys all mgmt apps             Deploys all apps apps
 #### For Helm Charts (e.g., kube-prometheus-stack):
 
 ```
-argocd/applications/mgmt/platform/kube-prometheus-stack.yaml
-    ↓ (references)
-argocd/clusters/mgmt/prometheus-values.yaml
+argocd/applications/mgmt/platform/kube-prometheus-stack/
+├── application.yaml         # Points to Helm chart
+└── values.yaml             # Helm values ($values reference in application.yaml)
     ↓ (ArgoCD fetches chart and applies values)
 Deployed resources in monitoring namespace
 ```
@@ -148,9 +174,14 @@ Deployed resources in monitoring namespace
 #### For Non-Helm Apps (e.g., nginx-router):
 
 ```
-argocd/applications/mgmt/platform/nginx-router.yaml
-    ↓ (points to)
+argocd/applications/mgmt/platform/nginx-router/
+└── application.yaml        # Points to argocd/apps/nginx-router/base/
+    ↓
 argocd/apps/nginx-router/base/
+├── namespace.yaml
+├── deployment.yaml
+├── service.yaml
+└── kustomization.yaml
     ↓ (ArgoCD applies manifests)
 Deployed resources in nginx-router namespace
 ```
@@ -159,11 +190,20 @@ Deployed resources in nginx-router namespace
 
 ### 1. Application Definitions
 
-**Location:** `argocd/applications/<cluster>/<category>/<app-name>.yaml`
+**Location:** `argocd/applications/<cluster>/<category>/<app-name>/`
+
+**Structure:** Each app gets its own directory containing ALL related files:
+```
+argocd/applications/<cluster>/<category>/<app-name>/
+├── application.yaml      # ArgoCD Application definition
+├── values.yaml          # Helm values (if Helm chart)
+└── <other-configs>.yaml # Any additional configs (ClusterIssuers, ConfigMaps, etc.)
+```
 
 **Naming Convention:**
-- Application name: `<cluster>-<app-name>` (e.g., `mgmt-prometheus`)
-- File name: `<app-name>.yaml` (e.g., `prometheus.yaml`)
+- Application name (in YAML): `<cluster>-<app-name>` (e.g., `mgmt-kube-prometheus-stack`)
+- Directory name: `<app-name>` (e.g., `kube-prometheus-stack/`)
+- Main file: Always named `application.yaml`
 
 **Categories:**
 - `platform/`: Infrastructure components (sealed-secrets, cert-manager, prometheus, etc.)
@@ -187,32 +227,45 @@ argocd/apps/my-app/
     └── prod/
 ```
 
-### 3. Cluster Configurations
+### 3. Helm Values and Configurations
 
-**Location:** `argocd/clusters/<cluster-name>/<app>-values.yaml`
+**Location:** `argocd/applications/<cluster>/<category>/<app-name>/values.yaml`
 
 **Naming Convention:**
-- Format: `<app>-values.yaml`
-- Examples: `prometheus-values.yaml`, `pihole-values.yaml`
+- Always named `values.yaml`
+- Lives in the same directory as `application.yaml`
+- Additional configs (ClusterIssuers, ConfigMaps, etc.) also live here
+
+**Example:**
+```
+argocd/applications/mgmt/platform/kube-prometheus-stack/
+├── application.yaml              # ArgoCD Application
+├── values.yaml                   # Helm values
+└── grafana-datasource-apps.yaml  # Additional config for Grafana
+```
 
 ## Common Patterns
 
 ### Adding a Helm Chart Application
 
-1. Create Application definition:
+1. Create app directory:
    ```bash
-   vim argocd/applications/mgmt/platform/grafana.yaml
+   mkdir -p argocd/applications/mgmt/platform/grafana
    ```
 
-2. Create Helm values:
+2. Create Application definition:
    ```bash
-   vim argocd/clusters/mgmt/grafana-values.yaml
+   vim argocd/applications/mgmt/platform/grafana/application.yaml
    ```
 
-3. Commit and push:
+3. Create Helm values:
    ```bash
-   git add argocd/applications/mgmt/platform/grafana.yaml
-   git add argocd/clusters/mgmt/grafana-values.yaml
+   vim argocd/applications/mgmt/platform/grafana/values.yaml
+   ```
+
+4. Commit and push:
+   ```bash
+   git add argocd/applications/mgmt/platform/grafana/
    git commit -m "Add Grafana"
    git push
    ```
@@ -227,15 +280,16 @@ argocd/apps/my-app/
    vim argocd/apps/my-app/base/kustomization.yaml
    ```
 
-2. Create Application definition:
+2. Create app directory and Application definition:
    ```bash
-   vim argocd/applications/mgmt/services/my-app.yaml
+   mkdir -p argocd/applications/mgmt/services/my-app
+   vim argocd/applications/mgmt/services/my-app/application.yaml
    ```
 
 3. Commit and push:
    ```bash
    git add argocd/apps/my-app/
-   git add argocd/applications/mgmt/services/my-app.yaml
+   git add argocd/applications/mgmt/services/my-app/
    git commit -m "Add my-app"
    git push
    ```
@@ -245,10 +299,9 @@ argocd/apps/my-app/
 | Directory | Purpose | Contains |
 |-----------|---------|----------|
 | `argocd/bootstrap/` | Bootstrap resources | AppProjects, root Applications |
-| `argocd/applications/` | Application definitions | ArgoCD Application CRDs |
-| `argocd/apps/` | Non-Helm manifests | Kustomize/plain YAML |
-| `bootstrap/` | Cluster setup | Installation scripts, ArgoCD config |
-| `argocd/clusters/` | Cluster configs | Helm values, cluster-specific settings |
+| `argocd/applications/` | App directories | Each app in its own dir with application.yaml, values.yaml, configs |
+| `argocd/apps/` | Non-Helm manifests | Kustomize/plain YAML for apps like nginx-router |
+| `bootstrap/` | Cluster setup | Installation scripts, root-app.yaml, ArgoCD install config |
 | `docs/` | Documentation | Runbooks, guides, references |
 | `examples/` | Sample apps | Example deployments for learning |
 
@@ -256,19 +309,20 @@ argocd/apps/my-app/
 
 1. **Keep it organized:**
    - All ArgoCD-related files under `argocd/`
-   - Cluster-specific configs under `argocd/clusters/`
-   - One application per file
+   - Each app in its own directory
+   - All app-related files together (no hunting!)
 
 2. **Naming consistency:**
-   - Application names: `<cluster>-<app-name>`
-   - File names: `<app-name>.yaml`
-   - Consistent with directory structure
+   - Application names (in YAML): `<cluster>-<app-name>`
+   - Directory names: `<app-name>/`
+   - Main file: Always `application.yaml`
+   - Values file: Always `values.yaml`
 
 3. **Separate concerns:**
    - Platform components in `platform/`
    - User services in `services/`
-   - Helm values in `argocd/clusters/`
-   - Raw manifests in `argocd/apps/`
+   - Helm apps: Everything in app directory
+   - Non-Helm apps: Manifests in `argocd/apps/`, Application def in `argocd/applications/`
 
 4. **Documentation:**
    - Update CHANGELOG.md for significant changes
@@ -281,18 +335,25 @@ argocd/apps/my-app/
 # Where do I put...?
 
 # 1. A new Helm chart application?
-argocd/applications/<cluster>/<platform|services>/<app>.yaml  # Application definition
-argocd/clusters/<cluster>/<app>-values.yaml                          # Helm values
+argocd/applications/<cluster>/<platform|services>/<app>/
+├── application.yaml    # Application definition
+└── values.yaml        # Helm values
 
 # 2. A non-Helm application?
-argocd/applications/<cluster>/<platform|services>/<app>.yaml  # Application definition
-argocd/apps/<app>/base/                                       # Kubernetes manifests
+argocd/applications/<cluster>/<platform|services>/<app>/
+└── application.yaml    # Application definition (points to argocd/apps/<app>/)
+argocd/apps/<app>/base/
+└── *.yaml             # Kubernetes manifests
 
-# 3. Cluster-specific secrets?
-argocd/clusters/<cluster>/<app>-sealed.yaml                          # Encrypted secrets
+# 3. Additional app configs (ClusterIssuer, ConfigMaps, IngressRoutes)?
+argocd/applications/<cluster>/<platform|services>/<app>/
+├── application.yaml
+├── values.yaml
+└── <config-name>.yaml  # Put it right here with the app!
 
-# 4. Shared platform configuration?
-argocd/clusters/<cluster>/<component>-values.yaml                    # Helm values
+# 4. Where is app X configured?
+# Just look in: argocd/applications/<cluster>/<platform|services>/<app>/
+# Everything for that app is in that ONE directory!
 ```
 
 ## See Also

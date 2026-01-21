@@ -1,9 +1,9 @@
 ---
-# Cert Manager for mgmt cluster
+# Sealed Secrets for mgmt cluster
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: mgmt-cert-manager
+  name: mgmt-sealed-secrets
   namespace: argocd
   labels:
     cluster: mgmt
@@ -11,22 +11,22 @@ metadata:
 spec:
   project: mgmt-platform
   source:
-    repoURL: https://charts.jetstack.io
-    chart: cert-manager
-    targetRevision: v1.16.2
+    repoURL: https://bitnami-labs.github.io/sealed-secrets
+    chart: sealed-secrets
+    targetRevision: 2.16.2
     helm:
       valueFiles:
-        - '$values/argocd/clusters/mgmt/cert-manager-values.yaml'
+        - '$values/argocd/applications/mgmt/platform/sealed-secrets/values.yaml'
   sources:
-    - repoURL: https://charts.jetstack.io
-      chart: cert-manager
-      targetRevision: v1.16.2
+    - repoURL: https://bitnami-labs.github.io/sealed-secrets
+      chart: sealed-secrets
+      targetRevision: 2.16.2
     - repoURL: git@github.com:IronPhysique/k8-devops.git
       targetRevision: main
       ref: values
   destination:
     server: https://kubernetes.default.svc
-    namespace: cert-manager
+    namespace: sealed-secrets
   syncPolicy:
     automated:
       prune: true

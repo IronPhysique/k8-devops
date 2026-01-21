@@ -12,7 +12,7 @@ spec:
   project: mgmt-platform
   source:
     repoURL: git@github.com:IronPhysique/k8-devops.git
-    path: argocd/apps/nginx-router/base
+    path: argocd/applications/mgmt/platform/nginx-router/manifests/base
     targetRevision: main
   destination:
     server: https://kubernetes.default.svc

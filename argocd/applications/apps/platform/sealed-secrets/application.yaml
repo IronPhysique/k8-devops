@@ -1,22 +1,22 @@
 ---
-# Sealed Secrets for mgmt cluster
+# Sealed Secrets for apps cluster
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: mgmt-sealed-secrets
+  name: apps-sealed-secrets
   namespace: argocd
   labels:
-    cluster: mgmt
+    cluster: apps
     component: platform
 spec:
-  project: mgmt-platform
+  project: apps-platform
   source:
     repoURL: https://bitnami-labs.github.io/sealed-secrets
     chart: sealed-secrets
     targetRevision: 2.16.2
     helm:
       valueFiles:
-        - '$values/argocd/clusters/mgmt/sealed-secrets-values.yaml'
+        - '$values/argocd/applications/apps/platform/sealed-secrets/values.yaml'
   sources:
     - repoURL: https://bitnami-labs.github.io/sealed-secrets
       chart: sealed-secrets
@@ -25,7 +25,7 @@ spec:
       targetRevision: main
       ref: values
   destination:
-    server: https://kubernetes.default.svc
+    server: https://192.168.178.139:6443
     namespace: sealed-secrets
   syncPolicy:
     automated:
