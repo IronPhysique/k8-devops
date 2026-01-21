@@ -16,6 +16,7 @@ spec:
     path: argocd/applications/mgmt
     directory:
       recurse: true
+      include: '*/application.yaml'
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
@@ -49,6 +50,7 @@ spec:
     path: argocd/applications/apps
     directory:
       recurse: true
+      include: '*/application.yaml'
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
