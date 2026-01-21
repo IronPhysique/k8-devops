@@ -26,3 +26,14 @@ dnsPolicy: ClusterFirst
 
 # Web UI port (since we can't use 80 with hostNetwork)
 webHttp: "8080"
+
+# Custom DNS entries for local domains
+customDnsmasq:
+  enabled: true
+  data:
+    02-custom.conf: |
+      addn-hosts=/etc/addn-hosts
+    addn-hosts: |
+      192.168.178.144 argocd.local
+      192.168.178.144 pihole.local
+      192.168.178.144 grafana.local
