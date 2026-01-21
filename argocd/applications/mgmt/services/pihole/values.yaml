@@ -1,62 +1,8 @@
-image:
-  repository: pihole/pihole
-  tag: "2024.07.0"
-
-DNS1: "1.1.1.1"
-DNS2: "1.0.0.1"
-
-serviceDhcp:
-  enabled: false
-
-# Web UI stays internal; nginx/traefik routes to it
-serviceWeb:
-  type: ClusterIP
-  http:
-    enabled: true
-    port: 80
-  https:
-    enabled: false
-
-# DNS stays ClusterIP; we'll expose host :53 via hostPort patch
-serviceDns:
-  type: ClusterIP
+# Bind DNS directly to the node on port 53
+# This allows Pi-hole to act as a real LAN DNS server
+dnsHostPort:
+  enabled: true
   port: 53
 
-persistentVolumeClaim:
-  enabled: true
-  accessModes:
-    - ReadWriteOnce
-  size: 1Gi
-
-resources:
-  requests:
-    cpu: 100m
-    memory: 256Mi
-  limits:
-    cpu: 500m
-    memory: 512Mi
-
-extraEnvVars:
-  TZ: "UTC"
-
-ingress:
-  enabled: true
-  ingressClassName: traefik
-  annotations:
-    cert-manager.io/cluster-issuer: selfsigned-issuer
-  hosts:
-    - pihole.mgmt.local
-  tls:
-    - secretName: pihole-tls
-      hosts:
-        - pihole.mgmt.local
-
-monitoring:
-  podMonitor:
-    enabled: true
-    labels:
-      cluster: mgmt
-      release: kube-prometheus-stack
-
-nodeSelector:
-  kubernetes.io/arch: arm64
+# Required for hostPort DNS on K3s
+hostNetwork: true

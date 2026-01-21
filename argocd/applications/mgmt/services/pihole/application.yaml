@@ -6,16 +6,21 @@ metadata:
 spec:
   project: mgmt-platform
 
-  source:
-    repoURL: git@github.com:IronPhysique/k8-devops.git
-    targetRevision: main
-    path: argocd/applications/mgmt/services/pihole
-    kustomize:
-      buildOptions: "--enable-helm"
-
   destination:
     server: https://kubernetes.default.svc
     namespace: pihole
+
+  sources:
+    - repoURL: https://mojo2600.github.io/pihole-kubernetes
+      chart: pihole
+      targetRevision: 2.26.1
+      helm:
+        valueFiles:
+          - $values/argocd/applications/mgmt/services/pihole/values.yaml
+
+    - repoURL: git@github.com:IronPhysique/k8-devops.git
+      targetRevision: main
+      ref: values
 
   syncPolicy:
     automated:
@@ -23,9 +28,3 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-    retry:
-      limit: 3
-      backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 2m
