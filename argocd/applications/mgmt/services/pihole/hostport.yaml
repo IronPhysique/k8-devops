@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pihole
+  namespace: pihole
+spec:
+  template:
+    spec:
+      containers:
+        - name: pihole
+          ports:
+            - name: dns
+              containerPort: 53
+              protocol: TCP
+              hostPort: 53
+            - name: dns-udp
+              containerPort: 53
+              protocol: UDP
+              hostPort: 53
