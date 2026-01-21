@@ -46,7 +46,7 @@ test-cluster/
 
 # Sensitive data
 secrets/*-plain.yaml
-.env
+*.env
 .envrc
 config.env  # Contains actual IPs - do not commit
 

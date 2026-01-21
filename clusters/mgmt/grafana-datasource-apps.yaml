@@ -1,0 +1,28 @@
+---
+# Grafana datasource for apps cluster Prometheus
+# Applied after apps cluster Prometheus is exposed via Traefik
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasource-apps
+  namespace: monitoring
+  labels:
+    grafana_datasource: "1"
+data:
+  apps-prometheus.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus-apps
+        type: prometheus
+        access: proxy
+        url: http://APPS_CLUSTER_IP:9090  # UPDATE after exposing Prometheus
+        isDefault: false
+        editable: true
+        jsonData:
+          timeInterval: 30s
+          httpMethod: POST
+        # Authentication via bearer token (created in apps cluster)
+        # secureJsonData:
+        #   httpHeaderValue1: "Bearer TOKEN_HERE"
+        # httpHeaderName1: "Authorization"

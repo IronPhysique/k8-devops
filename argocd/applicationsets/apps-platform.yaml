@@ -1,0 +1,74 @@
+---
+# ApplicationSet for apps cluster platform components
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: apps-platform
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - name: sealed-secrets
+            namespace: sealed-secrets
+            chart: sealed-secrets
+            repo: https://bitnami-labs.github.io/sealed-secrets
+            version: 2.16.2
+            valuesFile: clusters/apps/sealed-secrets-values.yaml
+          - name: cert-manager
+            namespace: cert-manager
+            chart: cert-manager
+            repo: https://charts.jetstack.io
+            version: v1.16.2
+            valuesFile: clusters/apps/cert-manager-values.yaml
+          - name: kube-prometheus-stack
+            namespace: monitoring
+            chart: kube-prometheus-stack
+            repo: https://prometheus-community.github.io/helm-charts
+            version: 67.7.0
+            valuesFile: clusters/apps/prometheus-values.yaml
+          - name: promtail
+            namespace: monitoring
+            chart: promtail
+            repo: https://grafana.github.io/helm-charts
+            version: 6.16.6
+            valuesFile: clusters/apps/promtail-values.yaml
+  template:
+    metadata:
+      name: 'apps-{{name}}'
+      namespace: argocd
+      labels:
+        cluster: apps
+        component: platform
+    spec:
+      project: apps-platform
+      source:
+        repoURL: '{{repo}}'
+        chart: '{{chart}}'
+        targetRevision: '{{version}}'
+        helm:
+          valueFiles:
+            - '$values/{{valuesFile}}'
+      sources:
+        - repoURL: '{{repo}}'
+          chart: '{{chart}}'
+          targetRevision: '{{version}}'
+        - repoURL: https://github.com/YOUR_USERNAME/homelab.git  # UPDATE THIS
+          targetRevision: main
+          ref: values
+      destination:
+        server: https://apps-cluster  # Will match cluster name after registration
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+        retry:
+          limit: 3
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 2m

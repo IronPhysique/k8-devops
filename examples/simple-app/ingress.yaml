@@ -1,0 +1,32 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: nginx-demo
+  namespace: demo
+spec:
+  entryPoints:
+    - web
+    - websecure
+  routes:
+    - match: Host(`demo.apps.local`)
+      kind: Rule
+      services:
+        - name: nginx-demo
+          port: 80
+  tls:
+    secretName: nginx-demo-tls
+---
+# Certificate for TLS
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: nginx-demo-tls
+  namespace: demo
+spec:
+  secretName: nginx-demo-tls
+  issuerRef:
+    name: homelab-ca-issuer
+    kind: ClusterIssuer
+  commonName: demo.apps.local
+  dnsNames:
+    - demo.apps.local

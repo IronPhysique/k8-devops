@@ -1,0 +1,157 @@
+# kube-prometheus-stack for apps cluster
+# Self-monitoring only (Grafana disabled - uses central mgmt Grafana)
+
+# Cluster label
+commonLabels:
+  cluster: apps
+
+# Prometheus Operator
+prometheusOperator:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+# Prometheus instance
+prometheus:
+  prometheusSpec:
+    # AMD64 image
+    image:
+      repository: quay.io/prometheus/prometheus
+      tag: v2.56.2
+
+    # Retention
+    retention: 30d
+    retentionSize: "50GB"
+
+    # Storage - larger for production workloads
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 100Gi
+
+    # Resource limits for PC hardware
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+
+    # Service monitors - scrape everything in apps cluster
+    serviceMonitorSelector:
+      matchLabels:
+        cluster: apps
+    serviceMonitorNamespaceSelector: {}
+
+    # Pod monitors
+    podMonitorSelector:
+      matchLabels:
+        cluster: apps
+    podMonitorNamespaceSelector: {}
+
+    # External labels
+    externalLabels:
+      cluster: apps
+      environment: homelab
+
+    # Enable admin API for remote queries from mgmt Grafana
+    enableAdminAPI: true
+
+    # Remote read/write disabled - Grafana queries directly
+    remoteRead: []
+    remoteWrite: []
+
+    # Security
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      fsGroup: 2000
+
+  # Service exposure for Grafana remote queries
+  # Exposed via Traefik IngressRouteTCP with authentication
+  service:
+    type: ClusterIP
+    port: 9090
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "9090"
+
+# Grafana - DISABLED (use central Grafana in mgmt cluster)
+grafana:
+  enabled: false
+
+# Alertmanager
+alertmanager:
+  alertmanagerSpec:
+    # AMD64 image
+    image:
+      repository: quay.io/prometheus/alertmanager
+      tag: v0.27.0
+
+    # Storage
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+
+    # Resources
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+# Kube-state-metrics
+kube-state-metrics:
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+# Node exporter - runs on all nodes
+prometheus-node-exporter:
+  resources:
+    limits:
+      cpu: 200m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+  # No node selector - runs on all architectures
+  nodeSelector: {}
+
+  # Tolerate all taints to monitor all nodes
+  tolerations:
+    - effect: NoSchedule
+      operator: Exists
+
+# Default scrape configs
+defaultRules:
+  create: true
+  rules:
+    alertmanager: true
+    etcd: false
+    kubeApiserver: true
+    kubeScheduler: false
+    kubeControllerManager: false
+    kubelet: true
+    kubeProxy: false
+    node: true
+    prometheus: true

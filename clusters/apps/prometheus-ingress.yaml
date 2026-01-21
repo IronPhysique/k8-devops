@@ -1,0 +1,70 @@
+---
+# Expose apps cluster Prometheus for mgmt Grafana
+# Uses Traefik IngressRoute with basic authentication
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: grafana-prometheus-reader
+  namespace: monitoring
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-prometheus-token
+  namespace: monitoring
+  annotations:
+    kubernetes.io/service-account.name: grafana-prometheus-reader
+type: kubernetes.io/service-account-token
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus-query
+rules:
+  - apiGroups: [""]
+    resources:
+      - services
+      - endpoints
+      - pods
+    verbs: ["get", "list", "watch"]
+  - nonResourceURLs:
+      - /metrics
+      - /api/v1/query
+      - /api/v1/query_range
+      - /api/v1/label/*/values
+      - /api/v1/series
+      - /api/v1/labels
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: grafana-prometheus-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus-query
+subjects:
+  - kind: ServiceAccount
+    name: grafana-prometheus-reader
+    namespace: monitoring
+---
+# Traefik IngressRoute for Prometheus HTTP API
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: prometheus-external
+  namespace: monitoring
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`prometheus-apps.local`)
+      kind: Rule
+      services:
+        - name: kube-prometheus-stack-prometheus
+          port: 9090
+      # Optional: Add basic auth middleware
+      # middlewares:
+      #   - name: prometheus-auth

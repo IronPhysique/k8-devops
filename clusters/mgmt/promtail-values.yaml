@@ -1,0 +1,50 @@
+# Promtail for mgmt cluster
+# Ships logs to Loki (optional - install Loki separately if needed)
+
+# ARM64 image
+image:
+  repository: grafana/promtail
+  tag: 3.2.1
+
+# DaemonSet - runs on all nodes
+daemonset:
+  enabled: true
+
+# Resource limits
+resources:
+  limits:
+    cpu: 200m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+# Loki endpoint (deploy Loki separately or disable promtail)
+config:
+  clients:
+    - url: http://loki.monitoring.svc:3100/loki/api/v1/push
+      # If Loki not deployed, Promtail will log errors but not crash
+
+  snippets:
+    extraClientConfigs: |
+      external_labels:
+        cluster: mgmt
+        environment: homelab
+
+# Service monitor
+serviceMonitor:
+  enabled: true
+  labels:
+    cluster: mgmt
+    release: kube-prometheus-stack
+
+# Security context
+podSecurityContext:
+  runAsUser: 0
+  runAsGroup: 0
+  fsGroup: 0
+
+# Tolerate control plane taints
+tolerations:
+  - effect: NoSchedule
+    operator: Exists

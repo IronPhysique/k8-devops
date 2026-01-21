@@ -1,0 +1,59 @@
+# cert-manager for apps cluster
+
+# AMD64 multi-arch image
+image:
+  repository: quay.io/jetstack/cert-manager-controller
+  tag: v1.16.2
+
+# Install CRDs
+installCRDs: true
+
+# Resource limits for PC hardware
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+# Prometheus metrics
+prometheus:
+  enabled: true
+  servicemonitor:
+    enabled: true
+    namespace: cert-manager
+    labels:
+      release: kube-prometheus-stack
+
+# Webhook configuration
+webhook:
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+# CA Injector
+cainjector:
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  capabilities:
+    drop:
+      - ALL
+
+# Global settings
+global:
+  leaderElection:
+    namespace: cert-manager

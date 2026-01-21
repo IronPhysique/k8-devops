@@ -1,0 +1,60 @@
+---
+# AppProject for management cluster platform components
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: mgmt-platform
+  namespace: argocd
+spec:
+  description: Management cluster platform components
+  sourceRepos:
+    - '*'
+  destinations:
+    - namespace: '*'
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+---
+# AppProject for apps cluster platform components
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: apps-platform
+  namespace: argocd
+spec:
+  description: Apps cluster platform components
+  sourceRepos:
+    - '*'
+  destinations:
+    - namespace: '*'
+      server: https://apps-cluster  # Will be cluster URL after registration
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+---
+# AppProject for application workloads
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: applications
+  namespace: argocd
+spec:
+  description: User application workloads
+  sourceRepos:
+    - '*'
+  destinations:
+    - namespace: '*'
+      server: https://apps-cluster
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'

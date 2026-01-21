@@ -1,0 +1,101 @@
+# Pi-hole DNS and ad-blocking for homelab
+# Exposed on LAN via Traefik TCP routing
+
+# ARM64 image
+image:
+  repository: pihole/pihole
+  tag: "2024.07.0"
+
+# DNS configuration
+DNS1: "1.1.1.1"
+DNS2: "1.0.0.1"
+
+# Admin password (use SealedSecret in production)
+adminPassword: "changeme"  # CHANGE THIS
+
+# Service configuration - use LoadBalancer for LAN access
+serviceDns:
+  type: LoadBalancer
+  port: 53
+  annotations:
+    metallb.universe.tf/allow-shared-ip: pihole-svc
+
+serviceDhcp:
+  enabled: false
+
+serviceWeb:
+  type: ClusterIP
+  http:
+    enabled: true
+    port: 80
+  https:
+    enabled: false
+
+# Persistence
+persistentVolumeClaim:
+  enabled: true
+  accessModes:
+    - ReadWriteOnce
+  size: 1Gi
+
+# Resources
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+# Environment variables
+extraEnvVars:
+  TZ: "UTC"
+  WEBPASSWORD: "changeme"  # CHANGE THIS
+  PIHOLE_DNS_: "1.1.1.1;1.0.0.1"
+
+# Ingress for web UI
+ingress:
+  enabled: true
+  ingressClassName: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: selfsigned-issuer
+  hosts:
+    - pihole.mgmt.local
+  tls:
+    - secretName: pihole-tls
+      hosts:
+        - pihole.mgmt.local
+
+# Monitoring
+monitoring:
+  podMonitor:
+    enabled: true
+    labels:
+      cluster: mgmt
+      release: kube-prometheus-stack
+
+# Pod configuration
+podDnsConfig:
+  enabled: true
+  policy: "None"
+  nameservers:
+    - 127.0.0.1
+    - 1.1.1.1
+
+# Anti-affinity - prefer different node than Prometheus
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - prometheus
+          topologyKey: kubernetes.io/hostname
+
+# Node selector for ARM64
+nodeSelector:
+  kubernetes.io/arch: arm64
