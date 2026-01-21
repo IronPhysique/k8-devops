@@ -1,19 +1,16 @@
 # Pi-hole DNS and ad-blocking for homelab
-# Exposed on LAN via Traefik TCP routing
 
-# ARM64 image
 image:
   repository: pihole/pihole
   tag: "2024.07.0"
 
-# DNS configuration
+# Upstream DNS (Pi-hole forwards here)
 DNS1: "1.1.1.1"
 DNS2: "1.0.0.1"
 
-# Admin password (use SealedSecret in production)
-adminPassword: "changeme"  # CHANGE THIS
+adminPassword: "changeme" # replace with SealedSecret later
 
-# Service configuration - use ClusterIP with hostPort for direct access
+# DNS service (internal only, hostNetwork does the real exposure)
 serviceDns:
   type: ClusterIP
   port: 53
@@ -21,6 +18,7 @@ serviceDns:
 serviceDhcp:
   enabled: false
 
+# Web UI
 serviceWeb:
   type: NodePort
   http:
@@ -30,7 +28,7 @@ serviceWeb:
   https:
     enabled: false
 
-# Persistence
+# Storage
 persistentVolumeClaim:
   enabled: true
   accessModes:
@@ -39,20 +37,20 @@ persistentVolumeClaim:
 
 # Resources
 resources:
-  limits:
-    cpu: 500m
-    memory: 512Mi
   requests:
     cpu: 100m
     memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
 
-# Environment variables
+# Environment
 extraEnvVars:
   TZ: "UTC"
-  WEBPASSWORD: "changeme"  # CHANGE THIS
+  WEBPASSWORD: "changeme"
   PIHOLE_DNS_: "1.1.1.1;1.0.0.1"
 
-# Ingress for web UI
+# Ingress (optional, nginx already handles most routing)
 ingress:
   enabled: true
   ingressClassName: traefik
@@ -73,15 +71,15 @@ monitoring:
       cluster: mgmt
       release: kube-prometheus-stack
 
-# Pod configuration
-podDnsConfig:
-  enabled: true
-  policy: "None"
-  nameservers:
-    - 127.0.0.1
-    - 1.1.1.1
+# 🚨 THIS IS THE IMPORTANT PART 🚨
+pod:
+  hostNetwork: true
+  dnsPolicy: ClusterFirstWithHostNet
 
-# Anti-affinity - prefer different node than Prometheus
+# Scheduling
+nodeSelector:
+  kubernetes.io/arch: arm64
+
 affinity:
   podAntiAffinity:
     preferredDuringSchedulingIgnoredDuringExecution:
@@ -89,16 +87,8 @@ affinity:
         podAffinityTerm:
           labelSelector:
             matchExpressions:
-              - key: app.kubernetes.io/name
+              - key: app
                 operator: In
                 values:
                   - prometheus
           topologyKey: kubernetes.io/hostname
-
-# Node selector for ARM64
-nodeSelector:
-  kubernetes.io/arch: arm64
-
-# Use host network to bind directly to node's port 53
-hostNetwork: true
-dnsPolicy: ClusterFirstWithHostNet
