@@ -73,6 +73,20 @@ data:
             }
         }
 
+        # AMP (Application Management Panel)
+        server {
+            listen 80;
+            server_name amp.home amp.local;
+
+            location / {
+                proxy_pass http://192.168.178.139:31866;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+        }
+
         # Default server - return 404
         server {
             listen 80 default_server;
