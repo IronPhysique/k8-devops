@@ -53,7 +53,7 @@ spec:
         - repoURL: '{{repo}}'
           chart: '{{chart}}'
           targetRevision: '{{version}}'
-        - repoURL: https://github.com/YOUR_USERNAME/homelab.git  # UPDATE THIS
+        - repoURL: https://github.com/IronPhysique/k8-devops.git
           targetRevision: main
           ref: values
       destination:
