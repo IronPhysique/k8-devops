@@ -1,7 +1,7 @@
 # Bind DNS directly to the node on port 53
 # This allows Pi-hole to act as a real LAN DNS server
 dnsHostPort:
-  enabled: true
+  enabled: false
   port: 53
 
 # Required for hostPort DNS on K3s
