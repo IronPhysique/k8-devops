@@ -1,17 +1,16 @@
 ---
-# Example Ingress with automatic DNS and TLS
-# This demonstrates the Kubernetes-native approach for homelab apps
+# Pi-hole Ingress with automatic DNS and TLS
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: nginx-demo-ingress
-  namespace: demo
+  name: pihole-ingress
+  namespace: pihole
   annotations:
     # cert-manager: Automatically issue/renew Let's Encrypt certificate
     cert-manager.io/cluster-issuer: letsencrypt-prod
     
     # external-dns: Automatically create DNS A record in Cloudflare
-    external-dns.alpha.kubernetes.io/hostname: demo.iron-lab.org
+    external-dns.alpha.kubernetes.io/hostname: pihole.iron-lab.org
     
     # Traefik: Force HTTPS redirect
     traefik.ingress.kubernetes.io/redirect-entry-point: https
@@ -19,16 +18,16 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - demo.iron-lab.org
-      secretName: nginx-demo-tls
+        - pihole.iron-lab.org
+      secretName: pihole-tls
   rules:
-    - host: demo.iron-lab.org
+    - host: pihole.iron-lab.org
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: nginx-demo
+                name: pihole-web
                 port:
                   number: 80

@@ -1,0 +1,28 @@
+---
+# ArgoCD Application for Pi-hole Ingress
+# Separate application to manage ingress alongside Helm chart
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mgmt-pihole-ingress
+  namespace: argocd
+  labels:
+    cluster: mgmt
+    component: service
+spec:
+  project: mgmt-platform
+  source:
+    repoURL: git@github.com:IronPhysique/k8-devops.git
+    targetRevision: main
+    path: argocd/applications/mgmt/services/pihole
+    directory:
+      include: pihole-ingress.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: pihole
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

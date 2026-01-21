@@ -1,34 +1,37 @@
 ---
-# Example Ingress with automatic DNS and TLS
-# This demonstrates the Kubernetes-native approach for homelab apps
+# ArgoCD Ingress with automatic DNS and TLS
+# Note: ArgoCD requires WebSocket support for the UI
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: nginx-demo-ingress
-  namespace: demo
+  name: argocd-ingress
+  namespace: argocd
   annotations:
     # cert-manager: Automatically issue/renew Let's Encrypt certificate
     cert-manager.io/cluster-issuer: letsencrypt-prod
     
     # external-dns: Automatically create DNS A record in Cloudflare
-    external-dns.alpha.kubernetes.io/hostname: demo.iron-lab.org
+    external-dns.alpha.kubernetes.io/hostname: argocd.iron-lab.org
     
     # Traefik: Force HTTPS redirect
     traefik.ingress.kubernetes.io/redirect-entry-point: https
+    
+    # Traefik: WebSocket support for ArgoCD UI
+    traefik.ingress.kubernetes.io/router.middlewares: default-headers@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - demo.iron-lab.org
-      secretName: nginx-demo-tls
+        - argocd.iron-lab.org
+      secretName: argocd-tls
   rules:
-    - host: demo.iron-lab.org
+    - host: argocd.iron-lab.org
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: nginx-demo
+                name: argocd-server
                 port:
                   number: 80
