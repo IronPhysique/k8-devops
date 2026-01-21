@@ -6,7 +6,6 @@ helmCharts:
   - name: pihole
     repo: https://mojo2600.github.io/pihole-kubernetes
     version: 2.26.1
-    releaseName: pihole
     namespace: pihole
     valuesFile: values.yaml
 
