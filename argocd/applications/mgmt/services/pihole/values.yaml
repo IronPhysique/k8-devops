@@ -1,31 +1,21 @@
 # Bind DNS directly to the node on port 53
 # This allows Pi-hole to act as a real LAN DNS server
-dnsHostPort:
-  enabled: false
-  port: 53
+hostNetwork: true
 
-# Use NodePort instead of hostNetwork to avoid port conflicts
-hostNetwork: false
+# DNS configuration for hostNetwork mode
+dnsPolicy: ClusterFirstWithHostNet
 
-# Use NodePort for web UI to avoid conflict with nginx-router on port 80
+# Change web UI port to avoid conflict with nginx-router on port 80
+# Pi-hole will listen on port 8053 for HTTP
+webHttp: "8053"
+
+# Environment variables to configure Pi-hole
+extraEnvVars:
+  WEB_PORT: "8053"
+
+# Service configuration (hostNetwork bypasses service, but keep for compatibility)
 service:
-  type: NodePort
-  dns:
-    port: 53
-    nodePort: 30053
-  web:
-    http:
-      port: 80
-      nodePort: 30080
-    https:
-      port: 443
-      nodePort: 30443
-
-# DNS configuration
-dnsPolicy: ClusterFirst
-
-# Web UI port (since we can't use 80 with hostNetwork)
-webHttp: "8080"
+  type: ClusterIP
 
 # Custom DNS entries for local domains
 customDnsmasq:
