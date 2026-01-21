@@ -8,6 +8,8 @@ dnsPolicy: ClusterFirstWithHostNet
 # Change web UI port to avoid conflict with nginx-router on port 80
 # Pi-hole will listen on port 8053 for HTTP
 webHttp: "8053"
+# Disable HTTPS to free up port 443 for nginx-router
+webHttps: ""
 
 # Environment variables to configure Pi-hole
 extraEnvVars:
