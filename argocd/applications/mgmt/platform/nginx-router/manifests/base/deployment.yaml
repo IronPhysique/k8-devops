@@ -46,6 +46,7 @@ spec:
           name: nginx-router-config
       - name: tls-certs
         secret:
-          secretName: home-tls
+          secretName: iron-lab-org-tls
+          optional: true  # Don't fail if cert isn't ready yet
       nodeSelector:
         kubernetes.io/arch: arm64
