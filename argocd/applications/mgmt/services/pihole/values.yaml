@@ -13,6 +13,12 @@ webHttp: "80"
 # Note: Chart still requires a port value, using 8443 but won't be exposed
 webHttps: "8443"
 
+# Enable DNS hostPort to bind port 53 directly on the node
+# This allows DNS clients to reach Pi-hole on standard port 53
+dnsHostPort:
+  enabled: true
+  port: 53
+
 # Service configuration
 service:
   type: NodePort
