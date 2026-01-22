@@ -47,10 +47,12 @@ spec:
         # This allows external-dns to auto-detect the IP without hardcoding per-ingress
         publishInternalServices: true
 
-        # Default target IP for ingresses without LoadBalancer
-        # This is used when ingress has no explicit external-dns.alpha.kubernetes.io/target annotation
+        # Create wildcard DNS record instead of individual records per ingress
+        # This is simpler and covers all *.iron-lab.org subdomains
         extraArgs:
+          - --fqdn-template=*.iron-lab.org
           - --default-targets=192.168.178.144
+          - --combine-fqdn-annotation=false
 
         # Logging
         logLevel: info
