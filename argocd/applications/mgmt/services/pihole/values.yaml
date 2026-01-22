@@ -5,11 +5,11 @@ hostNetwork: true
 # DNS configuration for hostNetwork mode
 dnsPolicy: ClusterFirstWithHostNet
 
-# Change web UI port to avoid conflict with nginx-router on port 80
+# Change web UI port to avoid conflict with Traefik on port 80
 # Pi-hole will listen on port 8053 for HTTP
 webHttp: "8053"
-# Disable HTTPS to free up port 443 for nginx-router
-webHttps: ""
+# Disable HTTPS to free up port 443 for Traefik
+webHttps: "0"
 
 # Environment variables to configure Pi-hole
 extraEnvVars:
@@ -19,6 +19,9 @@ extraEnvVars:
 # Service configuration (hostNetwork bypasses service, but keep for compatibility)
 service:
   type: ClusterIP
+  https:
+    # Disable HTTPS to free up port 443 for Traefik
+    enabled: false
 
 # Custom DNS entries for home domains
 dnsmasq:
@@ -27,6 +30,5 @@ dnsmasq:
     - "192.168.178.144 pihole.home"
     - "192.168.178.144 grafana.home"
     - "192.168.178.144 amp.home"
-  customSettings: |
-    # Override interface restriction - listen on all except loopback
-    except-interface=lo
+  customSettings:
+    - "except-interface=lo"
