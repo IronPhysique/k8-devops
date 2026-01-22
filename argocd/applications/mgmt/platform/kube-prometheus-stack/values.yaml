@@ -53,7 +53,7 @@ grafana:
   image:
     repository: grafana/grafana
     tag: 11.4.0
-  adminPassword: "admin"
+  adminPassword: "changeme"
   persistence:
     enabled: true
     size: 5Gi

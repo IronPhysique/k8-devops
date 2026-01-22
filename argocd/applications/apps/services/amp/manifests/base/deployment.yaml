@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: amp
-        image: mitchtalmadge/amp-dockerized:latest
+        image: mitchtalmadge/amp-dockerized:2.5.0.2
         ports:
         - name: web
           containerPort: 8080
@@ -39,7 +39,7 @@ spec:
         - name: USERNAME
           value: "admin"
         - name: PASSWORD
-          value: "CHANGEME_amp_admin_password"
+          value: "changeme"
         volumeMounts:
         - name: amp-data
           mountPath: /home/amp

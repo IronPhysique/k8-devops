@@ -20,10 +20,10 @@ find . -name "*.yaml" -exec sed -i "s/YOUR_USERNAME/your-username/g" {} +
 git add . && git commit -m "Configure" && git push
 
 # 3. Bootstrap management cluster
-./bootstrap/01-bootstrap-mgmt.sh
+./scripts/bootstrap/01-bootstrap-mgmt.sh
 
 # 4. Bootstrap apps cluster
-./bootstrap/02-bootstrap-apps.sh
+./scripts/bootstrap/02-bootstrap-apps.sh
 ```
 
 ## Access

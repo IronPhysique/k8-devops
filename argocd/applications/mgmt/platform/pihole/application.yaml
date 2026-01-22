@@ -16,7 +16,7 @@ spec:
       targetRevision: 2.26.1
       helm:
         valueFiles:
-          - $values/argocd/applications/mgmt/services/pihole/values.yaml
+          - $values/argocd/applications/mgmt/platform/pihole/values.yaml
 
     - repoURL: git@github.com:IronPhysique/k8-devops.git
       targetRevision: main

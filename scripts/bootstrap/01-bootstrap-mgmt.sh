@@ -23,7 +23,7 @@ SSH_OPTS=(
 
 # Try to source config.env from the project root.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="${SCRIPT_DIR%/docs/runbooks}"
+PROJECT_ROOT="${SCRIPT_DIR%/scripts/bootstrap}"
 if [ -f "${PROJECT_ROOT}/config.env" ]; then
   # shellcheck source=/dev/null
   . "${PROJECT_ROOT}/config.env"

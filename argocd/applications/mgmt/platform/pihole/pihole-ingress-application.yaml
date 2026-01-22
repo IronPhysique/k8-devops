@@ -8,13 +8,13 @@ metadata:
   namespace: argocd
   labels:
     cluster: mgmt
-    component: service
+    component: platform
 spec:
   project: mgmt-platform
   source:
     repoURL: git@github.com:IronPhysique/k8-devops.git
     targetRevision: main
-    path: argocd/applications/mgmt/services/pihole
+    path: argocd/applications/mgmt/platform/pihole
     directory:
       include: pihole-ingress.yaml
   destination:
