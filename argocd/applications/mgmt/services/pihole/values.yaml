@@ -10,7 +10,8 @@ dnsPolicy: ClusterFirst
 webHttp: "80"
 
 # Disable HTTPS - Traefik will handle TLS termination
-webHttps: "0"
+# Note: Chart still requires a port value, using 8443 but won't be exposed
+webHttps: "8443"
 
 # Service configuration
 service:
