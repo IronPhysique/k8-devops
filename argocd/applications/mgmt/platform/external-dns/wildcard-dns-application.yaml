@@ -1,0 +1,24 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: wildcard-dns
+  namespace: argocd
+spec:
+  project: mgmt-platform
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: external-dns
+
+  source:
+    repoURL: git@github.com:IronPhysique/k8-devops.git
+    targetRevision: main
+    path: argocd/applications/mgmt/platform/external-dns/manifests
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

@@ -47,12 +47,10 @@ spec:
         # This allows external-dns to auto-detect the IP without hardcoding per-ingress
         publishInternalServices: true
 
-        # Create wildcard DNS record instead of individual records per ingress
-        # This is simpler and covers all *.iron-lab.org subdomains
+        # Default target IP for ingresses without LoadBalancer
+        # Note: Wildcard DNS (*.iron-lab.org) is managed via DNSEndpoint CRD
         extraArgs:
-          - --fqdn-template=*.iron-lab.org
           - --default-targets=192.168.178.144
-          - --combine-fqdn-annotation=false
 
         # Logging
         logLevel: info

@@ -1,0 +1,12 @@
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: wildcard-iron-lab
+  namespace: external-dns
+spec:
+  endpoints:
+  - dnsName: "*.iron-lab.org"
+    recordTTL: 300
+    recordType: A
+    targets:
+    - 192.168.178.144
