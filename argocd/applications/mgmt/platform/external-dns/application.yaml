@@ -39,6 +39,7 @@ spec:
         # Resource types to watch
         sources:
           - ingress
+          - crd  # Watch DNSEndpoint CRDs for custom DNS records (like wildcard)
 
         # Annotation filter (optional - only sync annotated resources)
         # If unset, external-dns reads hostname from spec.rules[].host automatically
