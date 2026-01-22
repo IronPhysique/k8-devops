@@ -8,10 +8,10 @@ metadata:
   annotations:
     # cert-manager: Automatically issue/renew Let's Encrypt certificate
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    
-    # external-dns: Automatically reads hostname from spec.rules[].host
-    # external-dns: Automatically detects IP from ingress status or node IP
-    
+
+    # external-dns: Set DNS A record to node IP
+    external-dns.alpha.kubernetes.io/target: "192.168.178.144"
+
     # Traefik: Force HTTPS redirect
     traefik.ingress.kubernetes.io/redirect-entry-point: https
 spec:
