@@ -12,9 +12,6 @@ metadata:
 
     # Traefik: Force HTTPS redirect
     traefik.ingress.kubernetes.io/redirect-entry-point: https
-    
-    # Traefik: WebSocket support for ArgoCD UI
-    traefik.ingress.kubernetes.io/router.middlewares: default-headers@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:
