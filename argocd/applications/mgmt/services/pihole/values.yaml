@@ -9,7 +9,8 @@ dnsPolicy: ClusterFirstWithHostNet
 # Pi-hole will listen on port 8053 for HTTP
 webHttp: "8053"
 # Disable HTTPS to free up port 443 for Traefik
-webHttps: "0"
+# Empty string disables the HTTPS port entirely
+webHttps: ""
 
 # Environment variables to configure Pi-hole
 extraEnvVars:
