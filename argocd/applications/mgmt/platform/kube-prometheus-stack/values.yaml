@@ -79,6 +79,12 @@ grafana:
       isDefault: false
       jsonData:
         timeInterval: 30s
+    - name: Loki
+      type: loki
+      access: proxy
+      url: http://loki-gateway.monitoring.svc:80
+      jsonData:
+        maxLines: 1000
   defaultDashboardsEnabled: true
   defaultDashboardsTimezone: UTC
   ingress:
