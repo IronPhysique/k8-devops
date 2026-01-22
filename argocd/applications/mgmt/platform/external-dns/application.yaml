@@ -47,6 +47,11 @@ spec:
         # This allows external-dns to auto-detect the IP without hardcoding per-ingress
         publishInternalServices: true
 
+        # Default target IP for ingresses without LoadBalancer
+        # This is used when ingress has no explicit external-dns.alpha.kubernetes.io/target annotation
+        extraArgs:
+          - --default-targets=192.168.178.144
+
         # Logging
         logLevel: info
         logFormat: text
