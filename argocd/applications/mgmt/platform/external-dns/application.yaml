@@ -1,4 +1,3 @@
----
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -6,11 +5,9 @@ metadata:
   namespace: argocd
 spec:
   project: mgmt-platform
-
   destination:
     server: https://kubernetes.default.svc
     namespace: external-dns
-
   source:
     repoURL: https://kubernetes-sigs.github.io/external-dns
     chart: external-dns
@@ -18,52 +15,26 @@ spec:
     helm:
       values: |
         provider: cloudflare
-
         env:
           - name: CF_API_TOKEN
             valueFrom:
               secretKeyRef:
                 name: cloudflare-api-token
                 key: api-token
-
-        # Only manage specific domain
         domainFilters:
           - iron-lab.org
-
-        # Sync policy
-        policy: sync  # Can be 'sync' or 'upsert-only'
-
-        # TXT record ownership
+        policy: sync
         txtOwnerId: homelab-mgmt-cluster
-
-        # Resource types to watch
         sources:
           - ingress
-          - crd  # Watch DNSEndpoint CRDs for custom DNS records (like wildcard)
-
-        # Annotation filter (optional - only sync annotated resources)
-        # If unset, external-dns reads hostname from spec.rules[].host automatically
-        
-        # For k3s with Traefik: Configure to use node IP when ingress status is empty
-        # This allows external-dns to auto-detect the IP without hardcoding per-ingress
+          - crd
         publishInternalServices: true
-
-        # Default target IP for ingresses without LoadBalancer
-        # Note: Wildcard DNS (*.iron-lab.org) is managed via DNSEndpoint CRD
         extraArgs:
           - --default-targets=192.168.178.144
-
-        # Logging
         logLevel: info
         logFormat: text
-
-        # Interval for syncing
         interval: 5m
-
-        # Trigger sync on events
         triggerLoopOnEvent: true
-
-        # Resources
         resources:
           requests:
             cpu: 25m
@@ -71,7 +42,6 @@ spec:
           limits:
             cpu: 100m
             memory: 128Mi
-
   syncPolicy:
     automated:
       prune: true

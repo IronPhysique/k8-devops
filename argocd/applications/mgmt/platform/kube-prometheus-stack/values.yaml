@@ -1,11 +1,6 @@
-# kube-prometheus-stack for mgmt cluster
-# Self-monitoring Prometheus + centralized Grafana
-
-# Cluster label for multi-cluster Grafana
 commonLabels:
   cluster: mgmt
 
-# Prometheus Operator
 prometheusOperator:
   resources:
     limits:
@@ -15,19 +10,13 @@ prometheusOperator:
       cpu: 50m
       memory: 128Mi
 
-# Prometheus instance
 prometheus:
   prometheusSpec:
-    # ARM64 image
     image:
       repository: quay.io/prometheus/prometheus
       tag: v2.56.2
-
-    # Retention
     retention: 30d
     retentionSize: "10GB"
-
-    # Storage
     storageSpec:
       volumeClaimTemplate:
         spec:
@@ -35,8 +24,6 @@ prometheus:
           resources:
             requests:
               storage: 20Gi
-
-    # Resource limits for Pi 5
     resources:
       limits:
         cpu: 1000m
@@ -44,51 +31,32 @@ prometheus:
       requests:
         cpu: 200m
         memory: 512Mi
-
-    # Service monitors - scrape everything in mgmt cluster
     serviceMonitorSelector:
       matchLabels:
         cluster: mgmt
     serviceMonitorNamespaceSelector: {}
-
-    # Pod monitors
     podMonitorSelector:
       matchLabels:
         cluster: mgmt
     podMonitorNamespaceSelector: {}
-
-    # External labels for cross-cluster identification
     externalLabels:
       cluster: mgmt
       environment: homelab
-
-    # Enable admin API for remote queries
     enableAdminAPI: true
-
-    # Security
     securityContext:
       runAsNonRoot: true
       runAsUser: 1000
       fsGroup: 2000
 
-# Grafana - central dashboards for both clusters
 grafana:
   enabled: true
-
-  # ARM64 image
   image:
     repository: grafana/grafana
     tag: 11.4.0
-
-  # Admin credentials (use SealedSecret in production)
-  adminPassword: "admin"  # CHANGE THIS - see docs/runbooks/seal-secrets.md
-
-  # Persistence
+  adminPassword: "admin"
   persistence:
     enabled: true
     size: 5Gi
-
-  # Resource limits
   resources:
     limits:
       cpu: 500m
@@ -96,8 +64,6 @@ grafana:
     requests:
       cpu: 100m
       memory: 256Mi
-
-  # Datasources - both mgmt and apps Prometheus
   additionalDataSources:
     - name: Prometheus-mgmt
       type: prometheus
@@ -109,18 +75,12 @@ grafana:
     - name: Prometheus-apps
       type: prometheus
       access: proxy
-      url: http://prometheus-apps.monitoring.svc:9090  # Will be exposed via Traefik
+      url: http://prometheus-apps.monitoring.svc:9090
       isDefault: false
       jsonData:
         timeInterval: 30s
-      # Bearer token authentication (SealedSecret)
-      # See docs/runbooks/configure-grafana-datasources.md
-
-  # Dashboards
   defaultDashboardsEnabled: true
   defaultDashboardsTimezone: UTC
-
-  # Ingress via Traefik
   ingress:
     enabled: true
     ingressClassName: traefik
@@ -132,8 +92,6 @@ grafana:
       - secretName: grafana-tls
         hosts:
           - grafana.mgmt.local
-
-  # Sidecar for auto-loading dashboards from ConfigMaps
   sidecar:
     dashboards:
       enabled: true
@@ -145,15 +103,11 @@ grafana:
       label: grafana_datasource
       labelValue: "1"
 
-# Alertmanager
 alertmanager:
   alertmanagerSpec:
-    # ARM64 image
     image:
       repository: quay.io/prometheus/alertmanager
       tag: v0.27.0
-
-    # Storage
     storage:
       volumeClaimTemplate:
         spec:
@@ -161,8 +115,6 @@ alertmanager:
           resources:
             requests:
               storage: 5Gi
-
-    # Resources
     resources:
       limits:
         cpu: 200m
@@ -171,7 +123,6 @@ alertmanager:
         cpu: 50m
         memory: 128Mi
 
-# Kube-state-metrics
 kube-state-metrics:
   resources:
     limits:
@@ -181,7 +132,6 @@ kube-state-metrics:
       cpu: 25m
       memory: 64Mi
 
-# Node exporter
 prometheus-node-exporter:
   resources:
     limits:
@@ -190,19 +140,16 @@ prometheus-node-exporter:
     requests:
       cpu: 50m
       memory: 64Mi
-
-  # Node selector for ARM64
   nodeSelector:
     kubernetes.io/arch: arm64
 
-# Default scrape configs
 defaultRules:
   create: true
   rules:
     alertmanager: true
-    etcd: false  # k3s etcd metrics not exposed
+    etcd: false
     kubeApiserver: true
-    kubeScheduler: false  # k3s runs these as static pods
+    kubeScheduler: false
     kubeControllerManager: false
     kubelet: true
     kubeProxy: false

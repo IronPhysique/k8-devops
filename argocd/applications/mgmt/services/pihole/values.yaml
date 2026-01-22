@@ -1,34 +1,19 @@
-# Enable hostNetwork for DNS on port 53
-# Web UI uses port 8053 to avoid conflict with Traefik on port 80
 hostNetwork: true
-
-# Use ClusterFirstWithHostNet for proper DNS resolution in hostNetwork mode
 dnsPolicy: ClusterFirstWithHostNet
-
-# Web UI on port 8053 to avoid conflict with Traefik
-# Accessed via Traefik ingress, not directly
 webHttp: "8053"
-
-# Disable HTTPS - Traefik will handle TLS termination
-# Note: Chart still requires a port value, using 8443 but won't be exposed
 webHttps: "8443"
 
-# Environment variables to configure Pi-hole
 extraEnvVars:
   WEB_PORT: "8053"
   DNSMASQ_LISTENING: "all"
 
-# Service configuration
 service:
   type: NodePort
   dns:
-    # Expose DNS on NodePort for LAN access
     type: NodePort
   https:
-    # Disable HTTPS service - Traefik handles TLS
     enabled: false
 
-# Custom DNS entries for home domains
 dnsmasq:
   additionalHostsEntries:
     - "192.168.178.144 argocd.home"

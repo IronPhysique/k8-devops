@@ -1,14 +1,10 @@
----
-# Ingress for ArgoCD with automatic Let's Encrypt certificate
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: argocd-ingress
   namespace: argocd
   annotations:
-    # Automatically request Let's Encrypt certificate
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    # Nginx ingress annotations
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
 spec:
@@ -16,7 +12,7 @@ spec:
   tls:
   - hosts:
     - argocd.iron-lab.org
-    secretName: argocd-tls  # cert-manager will create this automatically
+    secretName: argocd-tls
   rules:
   - host: argocd.iron-lab.org
     http:
@@ -29,7 +25,6 @@ spec:
             port:
               number: 80
 ---
-# Ingress for Grafana
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -56,7 +51,6 @@ spec:
             port:
               number: 80
 ---
-# Ingress for Pi-hole
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

@@ -1,14 +1,9 @@
-# Sealed Secrets Controller for apps cluster
-# Note: Each cluster has its own sealing key
-
 fullnameOverride: sealed-secrets-controller
 
-# AMD64 image (multi-arch)
 image:
   repository: bitnami/sealed-secrets-controller
   tag: v0.27.4
 
-# Resource limits for PC hardware
 resources:
   limits:
     cpu: 500m
@@ -20,7 +15,6 @@ resources:
 commandArgs:
   - --update-status=true
 
-# Metrics for Prometheus scraping
 metrics:
   serviceMonitor:
     enabled: true
@@ -28,7 +22,6 @@ metrics:
     labels:
       release: kube-prometheus-stack
 
-# Security context
 podSecurityContext:
   fsGroup: 65534
 

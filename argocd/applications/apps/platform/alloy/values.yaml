@@ -1,30 +1,20 @@
-# Grafana Alloy for apps cluster
-# Unified observability agent - collects logs, metrics, and traces
-
-# DaemonSet - runs on all nodes for log collection
 alloy:
   mode: daemonset
-
-  # Alloy configuration in River language
   configMap:
     content: |-
-      // Discover and collect logs from all pods
       discovery.kubernetes "pods" {
         role = "pod"
       }
 
-      // Collect container logs
       discovery.relabel "kubernetes_pods" {
         targets = discovery.kubernetes.pods.targets
 
-        // Only scrape containers that have logs
         rule {
           source_labels = ["__meta_kubernetes_pod_container_name"]
           action = "drop"
           regex = "POD"
         }
 
-        // Add pod metadata as labels
         rule {
           source_labels = ["__meta_kubernetes_namespace"]
           target_label = "namespace"
@@ -45,7 +35,6 @@ alloy:
           target_label = "node"
         }
 
-        // Set log path
         rule {
           source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
           separator = "/"
@@ -54,13 +43,11 @@ alloy:
         }
       }
 
-      // Scrape discovered logs
       loki.source.kubernetes "kubernetes_pods" {
         targets    = discovery.relabel.kubernetes_pods.output
         forward_to = [loki.process.add_labels.receiver]
       }
 
-      // Add cluster labels
       loki.process "add_labels" {
         forward_to = [loki.write.loki.receiver]
 
@@ -72,15 +59,12 @@ alloy:
         }
       }
 
-      // Send logs to Loki
       loki.write "loki" {
         endpoint {
           url = "http://loki.monitoring.svc:3100/loki/api/v1/push"
-          // If Loki not deployed, Alloy will retry with backoff
         }
       }
 
-      // Export metrics about Alloy itself
       prometheus.exporter.self "alloy" { }
 
       prometheus.scrape "alloy" {
@@ -88,14 +72,12 @@ alloy:
         forward_to = [prometheus.remote_write.prometheus.receiver]
       }
 
-      // Send metrics to local Prometheus
       prometheus.remote_write "prometheus" {
         endpoint {
           url = "http://kube-prometheus-stack-prometheus.monitoring.svc:9090/api/v1/write"
         }
       }
 
-# Resource limits
 resources:
   limits:
     cpu: 200m
@@ -104,12 +86,10 @@ resources:
     cpu: 50m
     memory: 128Mi
 
-# Security context - needs root for log access
 securityContext:
   privileged: true
   runAsUser: 0
 
-# Mount host paths for log collection
 extraVolumes:
   - name: varlog
     hostPath:
@@ -126,12 +106,10 @@ extraVolumeMounts:
     mountPath: /var/lib/docker/containers
     readOnly: true
 
-# Tolerate all taints
 tolerations:
   - effect: NoSchedule
     operator: Exists
 
-# ServiceMonitor for Prometheus metrics
 serviceMonitor:
   enabled: true
   labels:

@@ -1,6 +1,3 @@
----
-# Root Application (App-of-Apps pattern)
-# This bootstraps all ArgoCD applications for both mgmt and apps clusters
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -34,7 +31,6 @@ spec:
         factor: 2
         maxDuration: 3m
 ---
-# Root Application for apps cluster
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

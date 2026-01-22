@@ -1,49 +1,18 @@
-# Reusable Ingress Template for Kubernetes-Native Routing
-# 
-# This template provides:
-# - Automatic DNS record creation (external-dns)
-# - Automatic TLS certificate issuance/renewal (cert-manager)
-# - Standard Kubernetes Ingress (works with Traefik in k3s)
-#
-# Usage:
-# 1. Copy this file to your app's directory
-# 2. Replace placeholders: APP_NAME, NAMESPACE, SERVICE_NAME, HOSTNAME
-# 3. Apply with kubectl or via Argo CD
-
----
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: APP_NAME-ingress
   namespace: NAMESPACE
   annotations:
-    # cert-manager: Automatically issue/renew Let's Encrypt certificate
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    
-    # external-dns: Automatically create DNS A record in Cloudflare
     external-dns.alpha.kubernetes.io/hostname: HOSTNAME.iron-lab.org
-    
-    # Traefik: Force HTTPS redirect (optional but recommended)
     traefik.ingress.kubernetes.io/redirect-entry-point: https
-    
-    # Traefik: Middleware for security headers (optional)
-    traefik.ingress.kubernetes.io/router.middlewares: default-headers@kubernetescrd
-    
-    # Traefik: Rate limiting (optional, adjust as needed)
-    # traefik.ingress.kubernetes.io/router.middlewares: default-rate-limit@kubernetescrd
-    
 spec:
-  # Use Traefik (default in k3s)
-  # If Traefik is set as default ingress class, you can omit this
   ingressClassName: traefik
-  
   tls:
-    # cert-manager will automatically create this secret
-    # Secret name should match: <app-name>-tls
     - hosts:
         - HOSTNAME.iron-lab.org
       secretName: APP_NAME-tls
-  
   rules:
     - host: HOSTNAME.iron-lab.org
       http:
@@ -55,22 +24,3 @@ spec:
                 name: SERVICE_NAME
                 port:
                   number: 80
-
----
-# Optional: Explicit Certificate resource (if you want more control)
-# cert-manager can also auto-create certificates from Ingress annotations above
-# This is only needed if you want to customize certificate settings
-#
-# apiVersion: cert-manager.io/v1
-# kind: Certificate
-# metadata:
-#   name: APP_NAME-tls
-#   namespace: NAMESPACE
-# spec:
-#   secretName: APP_NAME-tls
-#   issuerRef:
-#     name: letsencrypt-prod
-#     kind: ClusterIssuer
-#   dnsNames:
-#     - HOSTNAME.iron-lab.org
-#   renewBefore: 720h  # Renew 30 days before expiry

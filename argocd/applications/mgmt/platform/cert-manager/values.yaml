@@ -1,15 +1,9 @@
-# cert-manager for mgmt cluster
-# Provides automated certificate management
-
-# ARM64 multi-arch image
 image:
   repository: quay.io/jetstack/cert-manager-controller
   tag: v1.16.2
 
-# Install CRDs
 installCRDs: true
 
-# Resource limits for Pi 5
 resources:
   limits:
     cpu: 200m
@@ -18,7 +12,6 @@ resources:
     cpu: 50m
     memory: 128Mi
 
-# Prometheus metrics
 prometheus:
   enabled: true
   servicemonitor:
@@ -27,7 +20,6 @@ prometheus:
     labels:
       release: kube-prometheus-stack
 
-# Webhook configuration
 webhook:
   resources:
     limits:
@@ -37,7 +29,6 @@ webhook:
       cpu: 25m
       memory: 64Mi
 
-# CA Injector
 cainjector:
   resources:
     limits:
@@ -47,14 +38,12 @@ cainjector:
       cpu: 25m
       memory: 64Mi
 
-# Security context
 securityContext:
   runAsNonRoot: true
   capabilities:
     drop:
       - ALL
 
-# Global settings
 global:
   leaderElection:
     namespace: cert-manager
