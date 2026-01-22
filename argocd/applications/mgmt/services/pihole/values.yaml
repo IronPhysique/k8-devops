@@ -1,27 +1,25 @@
-# Bind DNS directly to the node on port 53
-# This allows Pi-hole to act as a real LAN DNS server
-hostNetwork: true
+# Disable hostNetwork to avoid port conflicts with Traefik
+# Pi-hole will use standard Kubernetes services instead
+hostNetwork: false
 
-# DNS configuration for hostNetwork mode
-dnsPolicy: ClusterFirstWithHostNet
+# Use standard ClusterFirst DNS policy since we're not using hostNetwork
+dnsPolicy: ClusterFirst
 
-# Change web UI port to avoid conflict with Traefik on port 80
-# Pi-hole will listen on port 8053 for HTTP
-webHttp: "8053"
-# Disable HTTPS to free up port 443 for Traefik
-# Empty string disables the HTTPS port entirely
-webHttps: ""
+# Use standard HTTP port 80 since we're not on hostNetwork
+# Traefik will handle the external access
+webHttp: "80"
 
-# Environment variables to configure Pi-hole
-extraEnvVars:
-  WEB_PORT: "8053"
-  DNSMASQ_LISTENING: "all"
+# Disable HTTPS - Traefik will handle TLS termination
+webHttps: "0"
 
-# Service configuration (hostNetwork bypasses service, but keep for compatibility)
+# Service configuration
 service:
-  type: ClusterIP
+  type: NodePort
+  dns:
+    # Expose DNS on NodePort for LAN access
+    type: NodePort
   https:
-    # Disable HTTPS to free up port 443 for Traefik
+    # Disable HTTPS service - Traefik handles TLS
     enabled: false
 
 # Custom DNS entries for home domains
