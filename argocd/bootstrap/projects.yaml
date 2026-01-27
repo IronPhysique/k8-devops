@@ -145,8 +145,6 @@ spec:
       server: https://192.168.178.139:6443
     - namespace: 'paperless'
       server: https://192.168.178.139:6443
-    - namespace: 'amp'
-      server: https://192.168.178.139:6443
     # Mgmt cluster (apps *-mgmt when ArgoCD runs on mgmt)
     - namespace: 'monitoring'
       server: https://kubernetes.default.svc
@@ -203,8 +201,6 @@ spec:
     - 'https://github.com/IronPhysique/k8-devops.git'
     - 'https://github.com/IronPhysique/*'
   destinations:
-    - namespace: 'amp'
-      server: https://192.168.178.139:6443
     - namespace: 'app-*'
       server: https://192.168.178.139:6443
     - namespace: 'paperless'
