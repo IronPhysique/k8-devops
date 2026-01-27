@@ -1,0 +1,29 @@
+{{- if .Values.hostname }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.serviceName }}
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # ExternalDNS annotation for per-app DNS record creation
+    # This creates: {{ .Values.hostname }} -> mgmt cluster Traefik
+    external-dns.alpha.kubernetes.io/hostname: {{ .Values.hostname }}
+    external-dns.alpha.kubernetes.io/target: {{ .Values.targetIP | default "192.168.178.144" }}
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - {{ .Values.hostname }}
+      secretName: {{ .Values.serviceName }}-tls
+  rules:
+    - host: {{ .Values.hostname }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.serviceName }}
+                port:
+                  number: {{ .Values.port }}
+{{- end }}

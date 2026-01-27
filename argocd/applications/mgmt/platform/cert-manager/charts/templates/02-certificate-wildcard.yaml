@@ -1,0 +1,23 @@
+---
+# Namespace for wildcard cert secret (shared use, e.g. nginx/ingress)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nginx-router
+---
+# Let's Encrypt wildcard *.iron-lab.org (stored in nginx-router for shared use)
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: iron-lab-org-tls
+  namespace: nginx-router
+spec:
+  secretName: iron-lab-org-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: "*.iron-lab.org"
+  dnsNames:
+    - iron-lab.org
+    - "*.iron-lab.org"
+  renewBefore: 720h  # 30 days

@@ -1,0 +1,219 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: mgmt-platform
+  namespace: argocd
+spec:
+  description: Management cluster platform components
+  sourceRepos:
+    - 'git@github.com:IronPhysique/k8-devops.git'
+    - 'https://github.com/IronPhysique/k8-devops.git'
+    - 'https://mojo2600.github.io/pihole-kubernetes'
+    - 'https://grafana.github.io/helm-charts'
+    - 'https://prometheus-community.github.io/helm-charts'
+    - 'https://charts.jetstack.io'
+    - 'https://kubernetes-sigs.github.io/external-dns'
+    - 'https://sealed-secrets.github.io/sealed-secrets'
+    - 'https://aquasecurity.github.io/helm-charts/'
+    - 'https://kyverno.github.io/kyverno/'
+    - 'https://kubernetes.github.io/dashboard/'
+    - 'https://traefik.github.io/charts'
+  destinations:
+    # Mgmt cluster
+    - namespace: 'argocd'
+      server: https://kubernetes.default.svc
+    - namespace: 'pihole'
+      server: https://kubernetes.default.svc
+    - namespace: 'monitoring'
+      server: https://kubernetes.default.svc
+    - namespace: 'kube-system'
+      server: https://kubernetes.default.svc
+    - namespace: 'cert-manager'
+      server: https://kubernetes.default.svc
+    - namespace: 'external-dns'
+      server: https://kubernetes.default.svc
+    - namespace: 'sealed-secrets'
+      server: https://kubernetes.default.svc
+    - namespace: 'trivy-system'
+      server: https://kubernetes.default.svc
+    - namespace: 'kyverno'
+      server: https://kubernetes.default.svc
+    - namespace: 'kubernetes-dashboard'
+      server: https://kubernetes.default.svc
+    - namespace: 'traefik'
+      server: https://kubernetes.default.svc
+    - namespace: 'nginx-router'
+      server: https://kubernetes.default.svc
+    - namespace: 'alloy'
+      server: https://kubernetes.default.svc
+    - namespace: 'grafana-dashboards'
+      server: https://kubernetes.default.svc
+    - namespace: 'loki'
+      server: https://kubernetes.default.svc
+    - namespace: 'trivy-operator'
+      server: https://kubernetes.default.svc
+    # Apps cluster (mgmt *-apps-cluster apps)
+    - namespace: 'argocd'
+      server: https://192.168.178.139:6443
+    - namespace: 'pihole'
+      server: https://192.168.178.139:6443
+    - namespace: 'monitoring'
+      server: https://192.168.178.139:6443
+    - namespace: 'kube-system'
+      server: https://192.168.178.139:6443
+    - namespace: 'cert-manager'
+      server: https://192.168.178.139:6443
+    - namespace: 'external-dns'
+      server: https://192.168.178.139:6443
+    - namespace: 'sealed-secrets'
+      server: https://192.168.178.139:6443
+    - namespace: 'trivy-system'
+      server: https://192.168.178.139:6443
+    - namespace: 'kyverno'
+      server: https://192.168.178.139:6443
+    - namespace: 'kubernetes-dashboard'
+      server: https://192.168.178.139:6443
+    - namespace: 'traefik'
+      server: https://192.168.178.139:6443
+    - namespace: 'nginx-router'
+      server: https://192.168.178.139:6443
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRole
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRoleBinding
+    - group: 'apiextensions.k8s.io'
+      kind: CustomResourceDefinition
+    - group: 'admissionregistration.k8s.io'
+      kind: ValidatingWebhookConfiguration
+    - group: 'admissionregistration.k8s.io'
+      kind: MutatingWebhookConfiguration
+    - group: 'cert-manager.io'
+      kind: ClusterIssuer
+    - group: 'externaldns.k8s.io'
+      kind: DNSEndpoint
+    - group: 'networking.k8s.io'
+      kind: IngressClass
+    - group: 'aquasecurity.github.io'
+      kind: ClusterComplianceReport
+    - group: 'wgpolicyk8s.io'
+      kind: ClusterPolicyReport
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: apps-platform
+  namespace: argocd
+spec:
+  description: Apps cluster platform components
+  sourceRepos:
+    - 'git@github.com:IronPhysique/k8-devops.git'
+    - 'https://github.com/IronPhysique/k8-devops.git'
+    - 'https://grafana.github.io/helm-charts'
+    - 'https://prometheus-community.github.io/helm-charts'
+    - 'https://charts.jetstack.io'
+    - 'https://kubernetes-sigs.github.io/external-dns'
+    - 'https://sealed-secrets.github.io/sealed-secrets'
+    - 'https://aquasecurity.github.io/helm-charts/'
+    - 'https://kyverno.github.io/kyverno/'
+    - 'https://argoproj.github.io/argo-helm'
+    - 'https://traefik.github.io/charts'
+  destinations:
+    # Apps cluster
+    - namespace: 'monitoring'
+      server: https://192.168.178.139:6443
+    - namespace: 'kube-system'
+      server: https://192.168.178.139:6443
+    - namespace: 'cert-manager'
+      server: https://192.168.178.139:6443
+    - namespace: 'external-dns'
+      server: https://192.168.178.139:6443
+    - namespace: 'sealed-secrets'
+      server: https://192.168.178.139:6443
+    - namespace: 'trivy-system'
+      server: https://192.168.178.139:6443
+    - namespace: 'kyverno'
+      server: https://192.168.178.139:6443
+    - namespace: 'argo-rollouts'
+      server: https://192.168.178.139:6443
+    - namespace: 'traefik'
+      server: https://192.168.178.139:6443
+    - namespace: 'paperless'
+      server: https://192.168.178.139:6443
+    - namespace: 'amp'
+      server: https://192.168.178.139:6443
+    # Mgmt cluster (apps *-mgmt when ArgoCD runs on mgmt)
+    - namespace: 'monitoring'
+      server: https://kubernetes.default.svc
+    - namespace: 'kube-system'
+      server: https://kubernetes.default.svc
+    - namespace: 'cert-manager'
+      server: https://kubernetes.default.svc
+    - namespace: 'external-dns'
+      server: https://kubernetes.default.svc
+    - namespace: 'sealed-secrets'
+      server: https://kubernetes.default.svc
+    - namespace: 'trivy-system'
+      server: https://kubernetes.default.svc
+    - namespace: 'kyverno'
+      server: https://kubernetes.default.svc
+    - namespace: 'argo-rollouts'
+      server: https://kubernetes.default.svc
+    - namespace: 'traefik'
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRole
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRoleBinding
+    - group: 'apiextensions.k8s.io'
+      kind: CustomResourceDefinition
+    - group: 'admissionregistration.k8s.io'
+      kind: ValidatingWebhookConfiguration
+    - group: 'admissionregistration.k8s.io'
+      kind: MutatingWebhookConfiguration
+    - group: 'cert-manager.io'
+      kind: ClusterIssuer
+    - group: 'networking.k8s.io'
+      kind: IngressClass
+    - group: 'aquasecurity.github.io'
+      kind: ClusterComplianceReport
+    - group: 'wgpolicyk8s.io'
+      kind: ClusterPolicyReport
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: applications
+  namespace: argocd
+spec:
+  description: User application workloads
+  sourceRepos:
+    - 'git@github.com:IronPhysique/k8-devops.git'
+    - 'https://github.com/IronPhysique/k8-devops.git'
+    - 'https://github.com/IronPhysique/*'
+  destinations:
+    - namespace: 'amp'
+      server: https://192.168.178.139:6443
+    - namespace: 'app-*'
+      server: https://192.168.178.139:6443
+    - namespace: 'paperless'
+      server: https://192.168.178.139:6443
+    - namespace: 'paperless'
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'

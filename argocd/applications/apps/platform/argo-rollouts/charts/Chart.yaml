@@ -1,0 +1,8 @@
+apiVersion: v2
+name: argo-rollouts
+description: Helm chart wrapper for argo-rollouts via ArgoCD
+version: 0.1.0
+dependencies:
+  - name: argo-rollouts
+    version: "2.40.5"
+    repository: "https://argoproj.github.io/argo-helm"

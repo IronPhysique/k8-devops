@@ -1,0 +1,43 @@
+# Values for external-dns subchart
+external-dns:
+  provider:
+    name: cloudflare
+
+  env:
+    - name: CF_API_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: cloudflare-api-token
+          key: api-token
+
+  domainFilters:
+    - iron-lab.org
+
+  policy: sync
+
+  txtOwnerId: homelab-mgmt-cluster
+
+  sources:
+    - ingress
+
+  # ExternalDNS will read hostnames from ingress annotations:
+  # external-dns.alpha.kubernetes.io/hostname
+  # external-dns.alpha.kubernetes.io/target
+
+  extraArgs:
+    - --default-targets=192.168.178.144
+
+  logLevel: info
+  logFormat: text
+
+  interval: 5m
+
+  triggerLoopOnEvent: true
+
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi

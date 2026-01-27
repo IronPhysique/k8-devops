@@ -1,0 +1,34 @@
+# Grafana-dashboards application configuration
+app:
+  name: grafana-dashboards
+  namespace: monitoring
+  cluster: mgmt
+  project: mgmt-platform
+
+  source:
+    path: argocd/applications/mgmt/platform/grafana-dashboards/charts
+    helm:
+      releaseName: grafana-dashboards
+      valueFiles:
+        - ../config/values.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m
+
+# Ingress configuration
+ingress:
+  enabled: false

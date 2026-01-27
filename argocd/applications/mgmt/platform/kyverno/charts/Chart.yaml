@@ -1,0 +1,8 @@
+apiVersion: v2
+name: kyverno
+description: Helm chart wrapper for Kyverno via ArgoCD
+version: 0.1.0
+dependencies:
+  - name: kyverno
+    version: "3.6.2"
+    repository: "https://kyverno.github.io/kyverno/"

@@ -1,0 +1,39 @@
+---
+# Argo CD installation for mgmt cluster
+# Install with: kubectl apply -n argocd -f scripts/bootstrap/argocd-install.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+---
+# Use official Argo CD installation manifest
+# Download and apply: kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+# This file documents the installation; actual install uses upstream manifest
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # Enable anonymous read for internal LAN access
+  users.anonymous.enabled: "false"
+  # Timeout for operations
+  timeout.reconciliation: "180s"
+  # Application settings
+  application.instanceLabelKey: argocd.argoproj.io/instance
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cmd-params-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cmd-params-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # Insecure mode for backend (ingress terminates TLS)
+  server.insecure: "true"

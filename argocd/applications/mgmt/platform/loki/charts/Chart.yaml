@@ -1,0 +1,8 @@
+apiVersion: v2
+name: loki
+description: Helm chart wrapper for Grafana Loki via ArgoCD
+version: 0.1.0
+dependencies:
+  - name: loki
+    version: "6.51.0"
+    repository: "https://grafana.github.io/helm-charts"

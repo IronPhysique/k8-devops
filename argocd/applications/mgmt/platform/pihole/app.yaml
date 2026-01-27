@@ -1,0 +1,39 @@
+# Pihole application configuration
+app:
+  name: pihole
+  namespace: pihole
+  cluster: mgmt
+  project: mgmt-platform
+
+  source:
+    path: argocd/applications/mgmt/platform/pihole/charts
+    helm:
+      releaseName: pihole
+      valueFiles:
+        - ../config/values.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m
+
+# Ingress configuration
+ingress:
+  enabled: true
+  hostname: pihole.iron-lab.org
+  namespace: pihole
+  cluster: mgmt
+  serviceName: pihole-web
+  port: 80

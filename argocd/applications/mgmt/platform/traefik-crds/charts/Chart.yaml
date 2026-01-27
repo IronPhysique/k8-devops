@@ -1,0 +1,8 @@
+apiVersion: v2
+name: traefik-crds
+description: Helm chart wrapper for Traefik CRDs via ArgoCD (mgmt cluster)
+version: 0.1.0
+dependencies:
+  - name: traefik-crds
+    version: "1.14.0"
+    repository: "https://traefik.github.io/charts"

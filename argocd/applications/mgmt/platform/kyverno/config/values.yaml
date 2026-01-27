@@ -1,0 +1,54 @@
+# Kyverno configuration for mgmt cluster
+replicas: 1
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+# Enable admission controller
+admissionController:
+  replicas: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+# Enable background controller for existing resources
+backgroundController:
+  enabled: true
+  replicas: 1
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+# Enable cleanup controller
+cleanupController:
+  enabled: true
+  replicas: 1
+
+# Enable reports controller for policy reports
+reportsController:
+  enabled: true
+  replicas: 1
+
+# Enable metrics for Prometheus
+metricsService:
+  create: true
+  type: ClusterIP
+
+# ServiceMonitor for Prometheus scraping
+serviceMonitor:
+  enabled: true
+  labels:
+    release: kube-prometheus-stack

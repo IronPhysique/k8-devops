@@ -1,0 +1,44 @@
+# Kubernetes Dashboard configuration
+app:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hosts:
+      - dashboard.iron-lab.org
+    tls:
+      enabled: true
+      secretName: dashboard-tls
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      traefik.ingress.kubernetes.io/redirect-entry-point: https
+
+  # Disable metrics scraper to save resources
+  settings:
+    global:
+      # Show all namespaces by default
+      defaultNamespace: default
+
+# Resource limits for Pi 5
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 50m
+    memory: 128Mi
+
+# Enable metrics server integration
+metricsScraper:
+  enabled: true
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+# Service account with appropriate permissions
+serviceAccount:
+  create: true
+  name: kubernetes-dashboard

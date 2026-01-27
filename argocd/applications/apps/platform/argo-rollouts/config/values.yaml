@@ -1,0 +1,30 @@
+# Argo Rollouts configuration for apps cluster
+controller:
+  replicas: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+# Enable metrics for Prometheus
+serviceMonitor:
+  enabled: true
+  additionalLabels:
+    release: kube-prometheus-stack
+
+# Enable dashboard
+dashboard:
+  enabled: true
+  replicas: 1
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: false
+
+# Notification engine for rollout events
+notifications:
+  secret:
+    create: false

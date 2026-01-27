@@ -1,0 +1,60 @@
+# Kubernetes configs
+*.kubeconfig
+kubeconfig*
+
+# Plain secrets (never commit)
+*-plain.yaml
+*-secret.yaml
+*plain.yml
+*secret.yml
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.cert
+pub-cert*.pem
+sealed-secrets-key-backup*.yaml
+
+# Backups
+*backup*.yaml
+*backup*.tar.gz
+*.backup
+
+# Temporary files
+/tmp/
+*.tmp
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Editor files
+.vscode/
+.idea/
+*.iml
+
+# Terraform (if added later)
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+
+# Local testing
+kind-config.yaml
+test-cluster/
+
+# Sensitive data
+secrets/*-plain.yaml
+*.env
+.envrc
+config.env  # Contains actual IPs - do not commit
+
+# Keep sealed secrets (encrypted, safe for Git)
+!*-sealed.yaml
+
+# Logs
+*.log
+
+# OS files
+Thumbs.db

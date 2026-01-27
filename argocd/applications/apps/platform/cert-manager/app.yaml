@@ -1,0 +1,38 @@
+# Cert-manager application configuration for apps cluster
+# Provides TLS certificate management for apps cluster ingresses
+app:
+  name: cert-manager-apps
+  namespace: cert-manager
+  cluster: apps
+  project: apps-platform
+  annotations:
+    # Deploy before ingresses need certificates
+    argocd.argoproj.io/sync-wave: "-1"
+
+  source:
+    path: argocd/applications/apps/platform/cert-manager/charts
+    helm:
+      releaseName: cert-manager
+      valueFiles:
+        - ../config/values.yaml
+
+  destination:
+    server: https://192.168.178.139:6443
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m
+
+# Ingress configuration
+ingress:
+  enabled: false

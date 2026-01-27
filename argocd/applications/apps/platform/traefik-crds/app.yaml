@@ -1,0 +1,33 @@
+# Traefik CRDs application configuration for apps cluster
+# This application installs ONLY Traefik CRDs (IngressRoute, Middleware, etc.)
+# and explicitly excludes Gateway API CRDs.
+app:
+  name: traefik-crds-apps
+  namespace: traefik
+  cluster: apps
+  project: apps-platform
+  annotations:
+    # Sync CRDs before Traefik deployment
+    argocd.argoproj.io/sync-wave: "-1"
+
+  source:
+    path: argocd/applications/apps/platform/traefik-crds/charts
+    helm:
+      releaseName: traefik-crds
+      valueFiles:
+        - ../config/values.yaml
+
+  destination:
+    server: https://192.168.178.139:6443
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+
+# Ingress configuration
+ingress:
+  enabled: false

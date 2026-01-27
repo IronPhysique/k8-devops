@@ -1,0 +1,56 @@
+# Pi-hole subchart overrides (nest under pihole for Helm parent → subchart)
+pihole:
+  # Pi-hole using host network for DNS on port 53
+  # Traefik uses LoadBalancer (not hostNetwork) so no port conflict on 80/443
+  # DNS will bind directly to port 53 on the host
+  hostNetwork: true
+  podDnsConfig:
+    enabled: false
+
+  extraEnvVars:
+    DNSMASQ_LISTENING: "all"
+
+  # Web interface on standard port 80 (Traefik will route to it)
+  serviceWeb:
+    type: ClusterIP
+    http:
+      enabled: true
+      port: 80
+    https:
+      enabled: false
+
+  serviceDns:
+    type: LoadBalancer
+    port: 53
+    loadBalancerIP: 192.168.178.53
+    # Note: With hostNetwork: true, pod binds directly to host port 53
+    # LoadBalancer IP provides service discovery but DNS is accessible via host IP
+
+  # Probe configuration - use HTTP GET instead of command to avoid 404 errors
+  # Template uses /admin path (hardcoded) when type is not "command"
+  probes:
+    liveness:
+      type: httpGet
+      enabled: true
+      port: http  # Port name from container port definition
+      scheme: HTTP
+      initialDelaySeconds: 60
+      failureThreshold: 10
+      timeoutSeconds: 5
+    readiness:
+      type: httpGet
+      enabled: true
+      port: http  # Port name from container port definition
+      scheme: HTTP
+      initialDelaySeconds: 60
+      failureThreshold: 10
+      timeoutSeconds: 5
+
+  dnsmasq:
+    additionalHostsEntries:
+      - "192.168.178.144 argocd.home"
+      - "192.168.178.144 pihole.home"
+      - "192.168.178.144 grafana.home"
+      - "192.168.178.144 amp.home"
+    customSettings:
+      - "except-interface=lo"

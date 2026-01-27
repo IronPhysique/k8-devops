@@ -1,0 +1,47 @@
+# ExternalDNS configuration for apps cluster
+# IMPORTANT: Uses different txtOwnerId than mgmt cluster to prevent record conflicts
+
+# Values for external-dns subchart
+external-dns:
+  provider:
+    name: cloudflare
+
+  env:
+    - name: CF_API_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: cloudflare-api-token
+          key: api-token
+
+  domainFilters:
+    - iron-lab.org
+
+  # Sync policy - sync creates/updates/deletes records
+  policy: sync
+
+  # CRITICAL: Different owner ID than mgmt cluster (homelab-mgmt-cluster)
+  # This prevents the two ExternalDNS instances from fighting over records
+  txtOwnerId: homelab-apps-cluster
+
+  # Only watch Ingress resources (apps cluster has its own Ingress controller)
+  sources:
+    - ingress
+
+  # Default target IP for DNS records (apps cluster Traefik LB IP)
+  extraArgs:
+    - --default-targets=192.168.178.139
+
+  logLevel: info
+  logFormat: text
+
+  interval: 5m
+
+  triggerLoopOnEvent: true
+
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi

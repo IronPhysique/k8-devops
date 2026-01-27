@@ -1,0 +1,18 @@
+# Traefik CRDs chart values for mgmt cluster
+# This chart installs ONLY Traefik-specific CRDs and explicitly excludes
+# Gateway API CRDs and all other optional components.
+traefik-crds:
+  # Enable Traefik CRDs (IngressRoute, Middleware, IngressRouteTCP, etc.)
+  enabled: true
+  traefik: true
+
+  # Explicitly disable Gateway API CRDs
+  gatewayAPI: false
+  gatewayAPIExperimental: false
+
+  # Disable all other optional components
+  knative: false
+  hub: false
+
+  # Keep CRDs when uninstalling (safer for GitOps)
+  deleteOnUninstall: false

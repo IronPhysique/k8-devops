@@ -1,0 +1,171 @@
+commonLabels:
+  cluster: mgmt
+
+
+kube-prometheus-stack:
+  commonLabels:
+    cluster: mgmt
+
+  nodeExporter:
+    enabled: false
+    
+  prometheusOperator:
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 128Mi
+
+  prometheus:
+    prometheusSpec:
+      image:
+        repository: prometheus/prometheus
+        tag: v3.5.1
+
+      retention: 30d
+      retentionSize: "10GB"
+
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 20Gi
+
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 2Gi
+        requests:
+          cpu: 200m
+          memory: 512Mi
+
+      serviceMonitorSelector:
+        matchLabels:
+          cluster: mgmt
+      serviceMonitorNamespaceSelector: {}
+
+      podMonitorSelector:
+        matchLabels:
+          cluster: mgmt
+      podMonitorNamespaceSelector: {}
+
+      externalLabels:
+        cluster: mgmt
+        environment: homelab
+
+      enableAdminAPI: true
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
+
+  grafana:
+    enabled: true
+
+    image:
+      repository: grafana/grafana
+      tag: 11.4.0
+
+    adminPassword: "changeme"
+
+    persistence:
+      enabled: true
+      size: 5Gi
+
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+    additionalDataSources:
+      - name: Prometheus-mgmt
+        type: prometheus
+        access: proxy
+        url: http://kube-prometheus-stack-prometheus.monitoring.svc:9090
+        isDefault: true
+        jsonData:
+          timeInterval: 30s
+
+      - name: Prometheus-apps
+        type: prometheus
+        access: proxy
+        url: http://prometheus-apps.monitoring.svc:9090
+        isDefault: false
+        jsonData:
+          timeInterval: 30s
+
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki-gateway.monitoring.svc:80
+        jsonData:
+          maxLines: 1000
+
+    defaultDashboardsEnabled: true
+    defaultDashboardsTimezone: UTC
+
+    ingress:
+      enabled: true
+      ingressClassName: traefik
+      annotations:
+        cert-manager.io/cluster-issuer: selfsigned-issuer
+      hosts:
+        - grafana.mgmt.local
+      tls:
+        - secretName: grafana-tls
+          hosts:
+            - grafana.mgmt.local
+
+    sidecar:
+      dashboards:
+        enabled: true
+        label: grafana_dashboard
+        labelValue: "1"
+        searchNamespace: ALL
+
+      datasources:
+        enabled: true
+        label: grafana_datasource
+        labelValue: "1"
+
+  alertmanager:
+    alertmanagerSpec:
+      image:
+      repository: prometheus/alertmanager
+      tag: v0.30.1
+
+      storage:
+        volumeClaimTemplate:
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 5Gi
+
+      resources:
+        limits:
+          cpu: 200m
+          memory: 256Mi
+        requests:
+          cpu: 50m
+          memory: 128Mi
+
+  kube-state-metrics:
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 25m
+        memory: 64Mi
+

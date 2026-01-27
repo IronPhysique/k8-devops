@@ -1,0 +1,34 @@
+# Trivy Operator configuration for mgmt cluster
+trivy:
+  image:
+    repository: ghcr.io/aquasecurity/trivy
+    tag: 0.58.2
+
+operator:
+  replicas: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+# Enable vulnerability scanning
+vulnerabilityReports:
+  scanner: Trivy
+
+# Scan running workloads
+compliance:
+  failEntriesLimit: 10
+
+# Enable metrics for Prometheus
+serviceMonitor:
+  enabled: true
+  labels:
+    release: kube-prometheus-stack
+
+# Scan settings
+trivyOperator:
+  scanJobTimeout: 5m
+  scanJobsConcurrentLimit: 3

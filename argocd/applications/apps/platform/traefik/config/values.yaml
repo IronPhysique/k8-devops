@@ -1,0 +1,104 @@
+# Traefik configuration for apps cluster
+# All values are prefixed with 'traefik:' for subchart dependency
+traefik:
+  # Use DaemonSet for best performance and host port binding
+  deployment:
+    kind: DaemonSet
+
+  crds:
+    enabled: false
+
+  # Disable Gateway API resources completely
+  gateway:
+    enabled: false
+
+  gatewayClass:
+    enabled: false
+
+  experimental:
+    kubernetesGateway:
+      enabled: false
+
+  # Enable dashboard for monitoring
+  ingressRoute:
+    dashboard:
+      enabled: true
+      matchRule: Host(`traefik-apps.iron-lab.org`)
+      entryPoints: ["websecure"]
+
+  # Ports configuration
+  ports:
+    web:
+      port: 8000
+      exposedPort: 80
+      protocol: TCP
+    websecure:
+      port: 8443
+      exposedPort: 443
+      protocol: TCP
+      tls:
+        enabled: true
+    metrics:
+      port: 9100
+      expose:
+        default: true
+      protocol: TCP
+
+  # LoadBalancer service with external IP for single-node k3s
+  service:
+    type: LoadBalancer
+    spec:
+      loadBalancerIP: 192.168.178.139
+    externalIPs:
+      - 192.168.178.139
+
+  # Enable Prometheus metrics
+  metrics:
+    prometheus:
+      enabled: true
+      entryPoint: metrics
+      service:
+        enabled: true
+
+  # Enable access logs for debugging
+  logs:
+    general:
+      level: INFO
+    access:
+      enabled: true
+
+  # Resource limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+
+  # Security context
+  securityContext:
+    capabilities:
+      drop: [ALL]
+      add: [NET_BIND_SERVICE]
+    readOnlyRootFilesystem: true
+    runAsGroup: 0
+    runAsNonRoot: false
+    runAsUser: 0
+
+  # Providers
+  providers:
+    kubernetesIngress:
+      enabled: true
+      publishedService:
+        enabled: false
+    kubernetesCRD:
+      enabled: true
+      allowCrossNamespace: true
+    # Disable Gateway API to avoid CRD conflicts
+    kubernetesGateway:
+      enabled: false
+
+  # Set static IP for ingress status since no cloud LB is available
+  additionalArguments:
+    - "--providers.kubernetesingress.ingressendpoint.ip=192.168.178.139"

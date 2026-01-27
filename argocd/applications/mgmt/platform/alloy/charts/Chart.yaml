@@ -1,0 +1,8 @@
+apiVersion: v2
+name: alloy
+description: Helm chart wrapper for Grafana Alloy via ArgoCD
+version: 0.1.0
+dependencies:
+  - name: alloy
+    version: "0.11.0"
+    repository: "https://grafana.github.io/helm-charts"

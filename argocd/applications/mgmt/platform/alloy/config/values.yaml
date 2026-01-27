@@ -1,0 +1,117 @@
+alloy:
+  mode: daemonset
+  configMap:
+    content: |-
+      discovery.kubernetes "pods" {
+        role = "pod"
+      }
+
+      discovery.relabel "kubernetes_pods" {
+        targets = discovery.kubernetes.pods.targets
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          action = "drop"
+          regex = "POD"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label = "namespace"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_name"]
+          target_label = "pod"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          target_label = "container"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_node_name"]
+          target_label = "node"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+          separator = "/"
+          target_label = "__path__"
+          replacement = "/var/log/pods/*$1/*.log"
+        }
+      }
+
+      loki.source.kubernetes "kubernetes_pods" {
+        targets    = discovery.relabel.kubernetes_pods.output
+        forward_to = [loki.process.add_labels.receiver]
+      }
+
+      loki.process "add_labels" {
+        forward_to = [loki.write.loki.receiver]
+
+        stage.static_labels {
+          values = {
+            cluster = "mgmt",
+            environment = "homelab",
+          }
+        }
+      }
+
+      loki.write "loki" {
+        endpoint {
+          url = "http://loki.monitoring.svc:3100/loki/api/v1/push"
+        }
+      }
+
+      prometheus.exporter.self "alloy" { }
+
+      prometheus.scrape "alloy" {
+        targets    = prometheus.exporter.self.alloy.targets
+        forward_to = [prometheus.remote_write.prometheus.receiver]
+      }
+
+      prometheus.remote_write "prometheus" {
+        endpoint {
+          url = "http://kube-prometheus-stack-prometheus.monitoring.svc:9090/api/v1/write"
+        }
+      }
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 50m
+    memory: 128Mi
+
+securityContext:
+  privileged: true
+  runAsUser: 0
+
+extraVolumes:
+  - name: varlog
+    hostPath:
+      path: /var/log
+  - name: varlibdockercontainers
+    hostPath:
+      path: /var/lib/docker/containers
+
+extraVolumeMounts:
+  - name: varlog
+    mountPath: /var/log
+    readOnly: true
+  - name: varlibdockercontainers
+    mountPath: /var/lib/docker/containers
+    readOnly: true
+
+tolerations:
+  - effect: NoSchedule
+    operator: Exists
+
+serviceMonitor:
+  enabled: true
+  labels:
+    cluster: mgmt
+    release: kube-prometheus-stack

@@ -1,0 +1,42 @@
+# Cert-manager configuration for apps cluster
+image:
+  repository: quay.io/jetstack/cert-manager-controller
+  tag: v1.16.2
+
+installCRDs: true
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 50m
+    memory: 128Mi
+
+webhook:
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 25m
+      memory: 64Mi
+
+cainjector:
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 25m
+      memory: 64Mi
+
+securityContext:
+  runAsNonRoot: true
+  capabilities:
+    drop:
+      - ALL
+
+global:
+  leaderElection:
+    namespace: cert-manager

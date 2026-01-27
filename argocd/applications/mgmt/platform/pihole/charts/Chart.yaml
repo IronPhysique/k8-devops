@@ -1,0 +1,8 @@
+apiVersion: v2
+name: pihole
+description: Helm chart wrapper for Pi-hole via ArgoCD
+version: 0.1.0
+dependencies:
+  - name: pihole
+    version: "2.26.1"
+    repository: "https://mojo2600.github.io/pihole-kubernetes"

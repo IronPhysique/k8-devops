@@ -1,0 +1,8 @@
+apiVersion: v2
+name: traefik
+description: Helm chart wrapper for Traefik via ArgoCD
+version: 0.1.0
+dependencies:
+  - name: traefik
+    version: "33.2.0"
+    repository: "https://traefik.github.io/charts"

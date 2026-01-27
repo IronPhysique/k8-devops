@@ -1,0 +1,58 @@
+---
+# ApplicationSet: Deploy all mgmt cluster applications
+# Scans applications/mgmt/platform/*/app.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: mgmt-apps
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=zero"]
+  generators:
+    - git:
+        repoURL: git@github.com:IronPhysique/k8-devops.git
+        revision: main
+        files:
+          - path: "argocd/applications/mgmt/platform/*/app.yaml"
+
+  template:
+    metadata:
+      name: '{{ .app.name }}'
+      {{- if .app.annotations }}
+      annotations:
+        {{- range $key, $value := .app.annotations }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      {{- end }}
+    spec:
+      project: '{{ .app.project }}'
+      source:
+        repoURL: git@github.com:IronPhysique/k8-devops.git
+        targetRevision: main
+        path: '{{ .app.source.path }}'
+        helm:
+          releaseName: '{{ .app.source.helm.releaseName }}'
+          {{- if .app.source.helm.skipCrds }}
+          skipCrds: {{ .app.source.helm.skipCrds }}
+          {{- end }}
+          valueFiles:
+            - '../config/values.yaml'
+
+      destination:
+        server: '{{ if .app.destination.server }}{{ .app.destination.server }}{{ else }}https://kubernetes.default.svc{{ end }}'
+        namespace: '{{ .app.namespace }}'
+
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+        retry:
+          limit: 3
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 2m

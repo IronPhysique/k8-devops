@@ -1,0 +1,4 @@
+apiVersion: v2
+name: ingress
+description: Local ingress template
+version: 1.0.0
