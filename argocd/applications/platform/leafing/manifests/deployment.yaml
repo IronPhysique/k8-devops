@@ -1,0 +1,230 @@
+# Before first sync, create the secret this app expects (not in git):
+#   kubectl --context=apps-cluster -n leafing create secret generic leafing-secrets \
+#     --from-literal=db-password=<password>
+# (or use scripts/create-sealed-secret.sh and commit the SealedSecret)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leafing
+  namespace: leafing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: leafing
+  template:
+    metadata:
+      labels:
+        app: leafing
+    spec:
+      containers:
+        - name: web
+          image: ghcr.io/ironphysique/leafing:latest
+          imagePullPolicy: Always
+          command: ["sh", "-c", "npx prisma migrate deploy && npm run start"]
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: leafing-secrets
+                  key: db-password
+            - name: DATABASE_URL
+              value: "postgres://leafing:$(POSTGRES_PASSWORD)@leafing-postgres:5432/leafing"
+            - name: REDIS_URL
+              value: "redis://leafing-redis:6379"
+            - name: FLARESOLVERR_URL
+              value: "http://leafing-flaresolverr:8191/v1"
+            - name: MANGA_STORAGE_DIR
+              value: "/data/manga"
+            - name: NODE_ENV
+              value: "production"
+            - name: NEXT_TELEMETRY_DISABLED
+              value: "1"
+          volumeMounts:
+            - name: manga
+              mountPath: /data/manga
+          readinessProbe:
+            httpGet:
+              path: /api/sources
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+            requests:
+              cpu: 250m
+              memory: 512Mi
+      volumes:
+        - name: manga
+          persistentVolumeClaim:
+            claimName: leafing-manga
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leafing-worker
+  namespace: leafing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: leafing-worker
+  template:
+    metadata:
+      labels:
+        app: leafing-worker
+    spec:
+      containers:
+        - name: worker
+          image: ghcr.io/ironphysique/leafing:latest
+          imagePullPolicy: Always
+          command: ["npm", "run", "worker:prod"]
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: leafing-secrets
+                  key: db-password
+            - name: DATABASE_URL
+              value: "postgres://leafing:$(POSTGRES_PASSWORD)@leafing-postgres:5432/leafing"
+            - name: REDIS_URL
+              value: "redis://leafing-redis:6379"
+            - name: FLARESOLVERR_URL
+              value: "http://leafing-flaresolverr:8191/v1"
+            - name: MANGA_STORAGE_DIR
+              value: "/data/manga"
+            - name: NODE_ENV
+              value: "production"
+          volumeMounts:
+            - name: manga
+              mountPath: /data/manga
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+      volumes:
+        - name: manga
+          persistentVolumeClaim:
+            claimName: leafing-manga
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leafing-postgres
+  namespace: leafing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: leafing-postgres
+  template:
+    metadata:
+      labels:
+        app: leafing-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:18-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: "leafing"
+            - name: POSTGRES_USER
+              value: "leafing"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: leafing-secrets
+                  key: db-password
+          volumeMounts:
+            # postgres:18 images keep PGDATA under /var/lib/postgresql
+            # (not .../data as in earlier majors)
+            - name: postgres-data
+              mountPath: /var/lib/postgresql
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: leafing-postgres
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leafing-redis
+  namespace: leafing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: leafing-redis
+  template:
+    metadata:
+      labels:
+        app: leafing-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:8-alpine
+          ports:
+            - containerPort: 6379
+          resources:
+            limits:
+              cpu: 200m
+              memory: 256Mi
+            requests:
+              cpu: 50m
+              memory: 128Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leafing-flaresolverr
+  namespace: leafing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: leafing-flaresolverr
+  template:
+    metadata:
+      labels:
+        app: leafing-flaresolverr
+    spec:
+      containers:
+        - name: flaresolverr
+          image: ghcr.io/flaresolverr/flaresolverr:latest
+          ports:
+            - containerPort: 8191
+          env:
+            - name: LOG_LEVEL
+              value: "info"
+            - name: TZ
+              value: "Europe/London"
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 256Mi

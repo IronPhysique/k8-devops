@@ -1,0 +1,24 @@
+# Leafing application configuration (manga/manhwa reader)
+# Image is built by GitHub Actions in IronPhysique/leafing (ghcr.io)
+app:
+  name: leafing
+  namespace: leafing
+  cluster: apps
+  project: applications
+
+  # Source configuration
+  source:
+    path: argocd/applications/platform/leafing/manifests
+
+  # Destination
+  destination:
+    server: https://192.168.178.139:6443
+
+  # Sync policy
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

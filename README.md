@@ -8,7 +8,7 @@ Two-cluster Kubernetes homelab managed by Argo CD (running on the mgmt cluster, 
 Management cluster (controller.local - Pi 5)   Apps cluster (server.local - PC)
 ├── Argo CD (manages both clusters)            ├── Traefik / cert-manager / external-dns
 ├── Traefik / cert-manager / external-dns      ├── Argo Rollouts
-├── Prometheus / Grafana / Loki / Alloy        └── Workloads (paperless-ngx, ...)
+├── Prometheus / Grafana / Loki / Alloy        └── Workloads (paperless-ngx, leafing)
 ├── Pi-hole / Sealed Secrets
 └── Kyverno / Trivy / Dashboards
 ```
@@ -28,7 +28,8 @@ Management cluster (controller.local - Pi 5)   Apps cluster (server.local - PC)
 | Security & policy | Kyverno (policies), Trivy Operator (vulnerability scanning) |
 | Delivery | Argo Rollouts (apps cluster, progressive delivery) |
 | Ops UI | Kubernetes Dashboard (kong proxy, exposed via Traefik IngressRoute) |
-| Workloads | paperless-ngx (raw manifests; backed by its own Redis 7 and PostgreSQL 16 instances) |
+| Workloads | paperless-ngx (raw manifests; backed by its own Redis 7 and PostgreSQL 16 instances); leafing (Next.js web + BullMQ worker from one GHCR image, PostgreSQL 18, Redis 8, FlareSolverr) |
+| CI | GitHub Actions — kubeconform + helm-template validation of this repo on every push/PR |
 
 ## Repository layout
 

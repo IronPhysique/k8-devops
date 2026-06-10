@@ -1,0 +1,27 @@
+---
+# Shared manga storage, mounted by both web and worker.
+# ReadWriteOnce is fine here: the apps cluster is single-node, so both
+# pods always land on the same node.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: leafing-manga
+  namespace: leafing
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: leafing-postgres
+  namespace: leafing
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi

@@ -1,0 +1,28 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: leafing
+  namespace: leafing
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/hostname: leafing.iron-lab.org
+    # Apps cluster Traefik LB
+    external-dns.alpha.kubernetes.io/target: 192.168.178.139
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - leafing.iron-lab.org
+      secretName: leafing-tls
+  rules:
+    - host: leafing.iron-lab.org
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: leafing
+                port:
+                  number: 3000

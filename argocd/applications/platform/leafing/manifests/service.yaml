@@ -1,0 +1,53 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: leafing
+  namespace: leafing
+spec:
+  selector:
+    app: leafing
+  ports:
+    - port: 3000
+      targetPort: 3000
+      name: http
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: leafing-postgres
+  namespace: leafing
+spec:
+  selector:
+    app: leafing-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: leafing-redis
+  namespace: leafing
+spec:
+  selector:
+    app: leafing-redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: leafing-flaresolverr
+  namespace: leafing
+spec:
+  selector:
+    app: leafing-flaresolverr
+  ports:
+    - port: 8191
+      targetPort: 8191
+  type: ClusterIP

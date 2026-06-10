@@ -1,0 +1,54 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+
+      - name: Install kubeconform
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
+            | sudo tar xz -C /usr/local/bin kubeconform
+
+      - name: Validate static manifests (ApplicationSets, AppProjects, app manifests)
+        run: |
+          kubeconform -strict -ignore-missing-schemas -summary \
+            argocd/applicationsets \
+            argocd/bootstrap \
+            argocd/applications/*/*/manifests
+
+      - name: Render every Helm wrapper chart with its values
+        run: |
+          set -euo pipefail
+          for chart in argocd/applications/*/*/charts; do
+            app="$(basename "$(dirname "$chart")")"
+            echo "::group::$app"
+            # Vendored charts (charts/*.tgz committed) render offline,
+            # matching how Argo CD treats them; others fetch the dependency.
+            if ! ls "$chart"/charts/*.tgz >/dev/null 2>&1; then
+              helm dependency build "$chart" >/dev/null
+            fi
+            helm template "$app" "$chart" -f "$(dirname "$chart")/config/values.yaml" \
+              | kubeconform -strict -ignore-missing-schemas -summary -
+            echo "::endgroup::"
+          done
+
+      - name: Check every app.yaml source.path exists
+        run: |
+          set -euo pipefail
+          for f in argocd/applications/*/*/app.yaml; do
+            p="$(grep -E '^\s*path:' "$f" | head -1 | awk '{print $2}')"
+            if [ ! -d "$p" ]; then
+              echo "BROKEN source.path '$p' in $f"
+              exit 1
+            fi
+          done
+          echo "all app.yaml source paths resolve"
