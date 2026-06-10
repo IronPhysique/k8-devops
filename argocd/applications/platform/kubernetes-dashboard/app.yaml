@@ -1,19 +1,19 @@
-# Kube-prometheus-stack application configuration
+# Kubernetes-dashboard application configuration
 app:
-  name: kube-prometheus-stack
-  namespace: monitoring
-  cluster: mgmt
-  project: mgmt-platform
+  name: kubernetes-dashboard
+  namespace: kubernetes-dashboard
+  cluster: apps
+  project: apps-platform
 
   source:
-    path: argocd/applications/mgmt/kube-prometheus-stack/charts
+    path: argocd/applications/platform/kubernetes-dashboard/charts
     helm:
-      releaseName: kube-prometheus-stack
+      releaseName: kubernetes-dashboard
       valueFiles:
         - ../config/values.yaml
 
   destination:
-    server: https://kubernetes.default.svc
+    server: https://192.168.178.139:6443
 
   syncPolicy:
     automated:

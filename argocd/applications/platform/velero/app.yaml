@@ -1,19 +1,19 @@
-# Kubernetes-dashboard application configuration
+# Velero application configuration (cluster backup to S3)
 app:
-  name: kubernetes-dashboard
-  namespace: kubernetes-dashboard
-  cluster: mgmt
-  project: mgmt-platform
+  name: velero
+  namespace: velero
+  cluster: apps
+  project: apps-platform
 
   source:
-    path: argocd/applications/mgmt/kubernetes-dashboard/charts
+    path: argocd/applications/platform/velero/charts
     helm:
-      releaseName: kubernetes-dashboard
+      releaseName: velero
       valueFiles:
         - ../config/values.yaml
 
   destination:
-    server: https://kubernetes.default.svc
+    server: https://192.168.178.139:6443
 
   syncPolicy:
     automated:
@@ -28,4 +28,3 @@ app:
         duration: 5s
         factor: 2
         maxDuration: 2m
-

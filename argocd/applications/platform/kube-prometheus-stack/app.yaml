@@ -1,19 +1,19 @@
-# Kyverno application configuration
+# Kube-prometheus-stack application configuration
 app:
-  name: kyverno
-  namespace: kyverno
-  cluster: mgmt
-  project: mgmt-platform
+  name: kube-prometheus-stack
+  namespace: monitoring
+  cluster: apps
+  project: apps-platform
 
   source:
-    path: argocd/applications/mgmt/kyverno/charts
+    path: argocd/applications/platform/kube-prometheus-stack/charts
     helm:
-      releaseName: kyverno
+      releaseName: kube-prometheus-stack
       valueFiles:
         - ../config/values.yaml
 
   destination:
-    server: https://kubernetes.default.svc
+    server: https://192.168.178.139:6443
 
   syncPolicy:
     automated:

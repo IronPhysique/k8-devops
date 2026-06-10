@@ -1,19 +1,17 @@
 # Grafana-dashboards application configuration
+# Plain ConfigMaps picked up by the Grafana dashboard sidecar
+# (label grafana_dashboard: "1")
 app:
   name: grafana-dashboards
   namespace: monitoring
-  cluster: mgmt
-  project: mgmt-platform
+  cluster: apps
+  project: apps-platform
 
   source:
-    path: argocd/applications/mgmt/grafana-dashboards/charts
-    helm:
-      releaseName: grafana-dashboards
-      valueFiles:
-        - ../config/values.yaml
+    path: argocd/applications/platform/grafana-dashboards/manifests
 
   destination:
-    server: https://kubernetes.default.svc
+    server: https://192.168.178.139:6443
 
   syncPolicy:
     automated:

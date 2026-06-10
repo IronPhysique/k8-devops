@@ -1,4 +1,0 @@
-apiVersion: v2
-name: grafana-dashboards
-description: Helm chart wrapper for Grafana Dashboards (raw manifests) via ArgoCD
-version: 0.1.0

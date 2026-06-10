@@ -1,0 +1,8 @@
+apiVersion: v2
+name: velero
+description: Helm chart wrapper for Velero via ArgoCD
+version: 0.1.0
+dependencies:
+  - name: velero
+    version: "12.0.2"
+    repository: "https://vmware-tanzu.github.io/helm-charts"

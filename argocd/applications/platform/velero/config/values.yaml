@@ -1,0 +1,78 @@
+# Velero - backs up apps-cluster resources and PVC data (paperless, leafing,
+# monitoring) to S3 on a daily schedule.
+#
+# Before first sync, create the credentials secret (NOT in git):
+#   kubectl --context=apps-cluster -n velero create secret generic velero-s3-credentials \
+#     --from-file=cloud=credentials-velero
+# where the credentials-velero file contains:
+#   [default]
+#   aws_access_key_id=<key>
+#   aws_secret_access_key=<secret>
+# (or seal it with scripts/create-sealed-secret.sh and commit the SealedSecret)
+#
+# Restore quickstart:
+#   velero backup get
+#   velero restore create --from-backup <name>
+velero:
+  initContainers:
+    - name: velero-plugin-for-aws
+      image: velero/velero-plugin-for-aws:v1.14.1
+      volumeMounts:
+        - mountPath: /target
+          name: plugins
+
+  configuration:
+    backupStorageLocation:
+      - name: default
+        provider: aws
+        bucket: CHANGEME-homelab-backups   # UPDATE: your S3 bucket name
+        prefix: apps-cluster
+        config:
+          region: eu-west-2                # UPDATE: bucket region
+          # For S3-compatible storage (MinIO / Backblaze B2 / Cloudflare R2),
+          # uncomment and set the endpoint:
+          # s3Url: https://s3.example.com
+          # s3ForcePathStyle: "true"
+
+    # k3s local-path volumes have no CSI snapshot support, so PV data is
+    # backed up file-system level by the node agent (kopia) instead.
+    volumeSnapshotLocation: []
+    defaultVolumesToFsBackup: true
+
+  # Node agent DaemonSet performs the file-system PV backups
+  deployNodeAgent: true
+
+  # No CSI/cloud snapshots on k3s local-path
+  snapshotsEnabled: false
+
+  credentials:
+    useSecret: true
+    existingSecret: velero-s3-credentials
+
+  schedules:
+    daily:
+      disabled: false
+      schedule: "0 3 * * *"
+      useOwnerReferencesInBackup: false
+      template:
+        ttl: 720h        # keep 30 days
+        includedNamespaces:
+          - "*"
+        excludedNamespaces:
+          - kube-system
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      # matches the kube-prometheus-stack serviceMonitorSelector
+      additionalLabels:
+        cluster: apps
+
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi

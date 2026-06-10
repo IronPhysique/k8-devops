@@ -1,16 +1,19 @@
 # Homelab GitOps
 
-Two-cluster Kubernetes homelab managed by Argo CD (running on the mgmt cluster, deploying to both).
+Two-cluster Kubernetes homelab managed by Argo CD. The mgmt cluster (Pi 5) is a thin
+controller: it runs Argo CD (which deploys to both clusters) and Pi-hole, plus the minimal
+ingress/TLS/DNS stack needed to expose those two. Everything else runs on the apps
+("platform") cluster.
 
 ## Architecture
 
 ```
-Management cluster (controller.local - Pi 5)   Apps cluster (server.local - PC)
-├── Argo CD (manages both clusters)            ├── Traefik / cert-manager / external-dns
-├── Traefik / cert-manager / external-dns      ├── Argo Rollouts
-├── Prometheus / Grafana / Loki / Alloy        └── Workloads (paperless-ngx, leafing)
-├── Pi-hole / Sealed Secrets
-└── Kyverno / Trivy / Dashboards
+Management cluster (controller.local - Pi 5)   Apps / platform cluster (server.local - PC)
+├── Argo CD (controls both clusters)           ├── Traefik / cert-manager / external-dns
+├── Pi-hole (LAN DNS / ad-blocking)            ├── Prometheus / Grafana / Loki / Alloy
+└── Traefik / cert-manager / external-dns      ├── Kyverno / Trivy / Kubernetes Dashboard
+    + Sealed Secrets                           ├── Argo Rollouts / Velero (S3 backups)
+    (only to serve ArgoCD + Pi-hole)           └── Workloads (paperless-ngx, leafing)
 ```
 
 ## Stack
@@ -25,6 +28,7 @@ Management cluster (controller.local - Pi 5)   Apps cluster (server.local - PC)
 | Secrets | Sealed Secrets (Cloudflare API tokens committed as SealedSecrets; helper scripts in `scripts/`) |
 | Monitoring | kube-prometheus-stack (Prometheus, Grafana, Alertmanager, node-exporter), custom Grafana dashboards app |
 | Logging | Grafana Alloy (pod log collection) → Loki |
+| Backups | Velero + node agent (kopia file-system backups for local-path PVs) → S3, daily schedule |
 | Security & policy | Kyverno (policies), Trivy Operator (vulnerability scanning) |
 | Delivery | Argo Rollouts (apps cluster, progressive delivery) |
 | Ops UI | Kubernetes Dashboard (kong proxy, exposed via Traefik IngressRoute) |

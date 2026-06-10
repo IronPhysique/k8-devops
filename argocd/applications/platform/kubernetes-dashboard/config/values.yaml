@@ -50,5 +50,5 @@ ingress:
   hostname: dashboard.iron-lab.org
   serviceName: kubernetes-dashboard-kong-proxy
   port: 443
-  # mgmt cluster Traefik LB (used by ExternalDNS)
-  targetIP: 192.168.178.144
+  # apps cluster Traefik LB (used by ExternalDNS)
+  targetIP: 192.168.178.139

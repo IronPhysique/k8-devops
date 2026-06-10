@@ -1,22 +1,20 @@
-# Alloy application configuration
+# Loki application configuration
 app:
-  name: alloy
+  name: loki
   namespace: monitoring
-  cluster: mgmt
-  project: mgmt-platform
+  cluster: apps
+  project: apps-platform
 
-  # Helm chart configuration
   source:
-    path: argocd/applications/mgmt/alloy/charts
+    path: argocd/applications/platform/loki/charts
     helm:
-      releaseName: alloy
+      releaseName: loki
       valueFiles:
         - ../config/values.yaml
 
   destination:
-    server: https://kubernetes.default.svc
+    server: https://192.168.178.139:6443
 
-  # Sync policy
   syncPolicy:
     automated:
       prune: true

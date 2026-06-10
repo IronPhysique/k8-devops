@@ -53,7 +53,7 @@ alloy:
 
         stage.static_labels {
           values = {
-            cluster = "mgmt",
+            cluster = "apps",
             environment = "homelab",
           }
         }
@@ -113,5 +113,5 @@ tolerations:
 serviceMonitor:
   enabled: true
   labels:
-    cluster: mgmt
+    cluster: apps
     release: kube-prometheus-stack

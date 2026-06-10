@@ -1,4 +1,4 @@
-# Kyverno configuration for mgmt cluster
+# Kyverno configuration for the apps cluster
 replicas: 1
 
 resources:

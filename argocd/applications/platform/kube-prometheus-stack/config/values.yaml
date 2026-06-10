@@ -1,10 +1,10 @@
 commonLabels:
-  cluster: mgmt
+  cluster: apps
 
 
 kube-prometheus-stack:
   commonLabels:
-    cluster: mgmt
+    cluster: apps
 
   nodeExporter:
     enabled: false
@@ -46,16 +46,16 @@ kube-prometheus-stack:
 
       serviceMonitorSelector:
         matchLabels:
-          cluster: mgmt
+          cluster: apps
       serviceMonitorNamespaceSelector: {}
 
       podMonitorSelector:
         matchLabels:
-          cluster: mgmt
+          cluster: apps
       podMonitorNamespaceSelector: {}
 
       externalLabels:
-        cluster: mgmt
+        cluster: apps
         environment: homelab
 
       enableAdminAPI: true
@@ -86,23 +86,9 @@ kube-prometheus-stack:
         cpu: 100m
         memory: 256Mi
 
+    # The chart auto-provisions the default "Prometheus" datasource for its
+    # own Prometheus, so only extra datasources are listed here.
     additionalDataSources:
-      - name: Prometheus-mgmt
-        type: prometheus
-        access: proxy
-        url: http://kube-prometheus-stack-prometheus.monitoring.svc:9090
-        isDefault: true
-        jsonData:
-          timeInterval: 30s
-
-      - name: Prometheus-apps
-        type: prometheus
-        access: proxy
-        url: http://prometheus-apps.monitoring.svc:9090
-        isDefault: false
-        jsonData:
-          timeInterval: 30s
-
       - name: Loki
         type: loki
         access: proxy
@@ -113,17 +99,10 @@ kube-prometheus-stack:
     defaultDashboardsEnabled: true
     defaultDashboardsTimezone: UTC
 
+    # Chart-level ingress stays off; grafana.iron-lab.org is served by
+    # charts/templates/ingress.yaml (see the ingress block at the bottom).
     ingress:
-      enabled: true
-      ingressClassName: traefik
-      annotations:
-        cert-manager.io/cluster-issuer: selfsigned-issuer
-      hosts:
-        - grafana.mgmt.local
-      tls:
-        - secretName: grafana-tls
-          hosts:
-            - grafana.mgmt.local
+      enabled: false
 
     sidecar:
       dashboards:
@@ -140,8 +119,8 @@ kube-prometheus-stack:
   alertmanager:
     alertmanagerSpec:
       image:
-      repository: prometheus/alertmanager
-      tag: v0.30.1
+        repository: prometheus/alertmanager
+        tag: v0.30.1
 
       storage:
         volumeClaimTemplate:
@@ -176,5 +155,5 @@ ingress:
   hostname: grafana.iron-lab.org
   serviceName: kube-prometheus-stack-grafana
   port: 80
-  # mgmt cluster Traefik LB (used by ExternalDNS)
-  targetIP: 192.168.178.144
+  # apps cluster Traefik LB (used by ExternalDNS)
+  targetIP: 192.168.178.139

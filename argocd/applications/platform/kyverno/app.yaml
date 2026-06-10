@@ -1,19 +1,19 @@
-# Loki application configuration
+# Kyverno application configuration
 app:
-  name: loki
-  namespace: monitoring
-  cluster: mgmt
-  project: mgmt-platform
+  name: kyverno
+  namespace: kyverno
+  cluster: apps
+  project: apps-platform
 
   source:
-    path: argocd/applications/mgmt/loki/charts
+    path: argocd/applications/platform/kyverno/charts
     helm:
-      releaseName: loki
+      releaseName: kyverno
       valueFiles:
         - ../config/values.yaml
 
   destination:
-    server: https://kubernetes.default.svc
+    server: https://192.168.178.139:6443
 
   syncPolicy:
     automated:

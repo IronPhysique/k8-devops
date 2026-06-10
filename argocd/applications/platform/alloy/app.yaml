@@ -1,20 +1,22 @@
-# Trivy-operator application configuration
+# Alloy application configuration
 app:
-  name: trivy-operator
-  namespace: trivy-system
-  cluster: mgmt
-  project: mgmt-platform
+  name: alloy
+  namespace: monitoring
+  cluster: apps
+  project: apps-platform
 
+  # Helm chart configuration
   source:
-    path: argocd/applications/mgmt/trivy-operator/charts
+    path: argocd/applications/platform/alloy/charts
     helm:
-      releaseName: trivy-operator
+      releaseName: alloy
       valueFiles:
         - ../config/values.yaml
 
   destination:
-    server: https://kubernetes.default.svc
+    server: https://192.168.178.139:6443
 
+  # Sync policy
   syncPolicy:
     automated:
       prune: true

@@ -145,6 +145,10 @@ spec:
       server: https://192.168.178.139:6443
     - namespace: 'paperless'
       server: https://192.168.178.139:6443
+    - namespace: 'kubernetes-dashboard'
+      server: https://192.168.178.139:6443
+    - namespace: 'velero'
+      server: https://192.168.178.139:6443
     # Mgmt cluster (apps *-mgmt when ArgoCD runs on mgmt)
     - namespace: 'monitoring'
       server: https://kubernetes.default.svc
