@@ -1,0 +1,28 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: paperless-ngx
+  namespace: paperless
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/hostname: paperless.iron-lab.org
+    # Apps cluster Traefik LB
+    external-dns.alpha.kubernetes.io/target: 192.168.178.139
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - paperless.iron-lab.org
+      secretName: paperless-ngx-tls
+  rules:
+    - host: paperless.iron-lab.org
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: paperless-ngx
+                port:
+                  number: 8000

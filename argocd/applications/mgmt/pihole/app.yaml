@@ -29,11 +29,3 @@ app:
         factor: 2
         maxDuration: 2m
 
-# Ingress configuration
-ingress:
-  enabled: true
-  hostname: pihole.iron-lab.org
-  namespace: pihole
-  cluster: mgmt
-  serviceName: pihole-web
-  port: 8080

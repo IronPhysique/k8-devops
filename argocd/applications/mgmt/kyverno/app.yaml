@@ -29,6 +29,3 @@ app:
         factor: 2
         maxDuration: 2m
 
-# Ingress configuration
-ingress:
-  enabled: false

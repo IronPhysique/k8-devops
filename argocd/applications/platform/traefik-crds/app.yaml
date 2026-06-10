@@ -28,6 +28,3 @@ app:
       - CreateNamespace=true
       - ServerSideApply=true
 
-# Ingress configuration
-ingress:
-  enabled: false

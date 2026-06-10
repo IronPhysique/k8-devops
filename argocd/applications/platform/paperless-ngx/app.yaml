@@ -22,14 +22,3 @@ app:
       - CreateNamespace=true
       - ServerSideApply=true
 
-# Ingress configuration (used by platform-ingress)
-# This creates an Ingress directly on the apps cluster Traefik
-# ExternalDNS on apps cluster will create: paperless.iron-lab.org -> 192.168.178.139
-ingress:
-  enabled: true
-  hostname: paperless.iron-lab.org
-  namespace: paperless
-  serviceName: paperless-ngx
-  port: 8000
-  # Target IP for ExternalDNS (apps cluster Traefik LB)
-  targetIP: 192.168.178.139

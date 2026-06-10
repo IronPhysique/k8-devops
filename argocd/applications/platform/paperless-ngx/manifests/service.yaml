@@ -38,5 +38,4 @@ spec:
     - port: 5432
       targetPort: 5432
   type: ClusterIP
-# Note: Ingress is now created via platform-ingress ApplicationSet
-# which adds proper TLS and ExternalDNS annotations
+# Note: Ingress lives in manifests/ingress.yaml (TLS + ExternalDNS annotations)

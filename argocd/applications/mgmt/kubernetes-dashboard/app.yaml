@@ -29,11 +29,3 @@ app:
         factor: 2
         maxDuration: 2m
 
-# Ingress configuration (used by mgmt-ingress)
-# ExternalDNS will create: dashboard.iron-lab.org -> 192.168.178.144
-ingress:
-  enabled: true
-  hostname: dashboard.iron-lab.org
-  namespace: kubernetes-dashboard
-  serviceName: kubernetes-dashboard-kong-proxy
-  port: 443

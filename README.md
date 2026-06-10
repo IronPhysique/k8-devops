@@ -21,16 +21,14 @@ argocd/
 │   └── projects.yaml          # Argo CD AppProjects
 ├── applicationsets/
 │   ├── mgmt-apps.yaml         # generates Applications from applications/mgmt/*/app.yaml
-│   ├── platform-apps.yaml     # generates Applications from applications/platform/*/app.yaml
-│   ├── mgmt-ingress.yaml      # generates Ingress apps for mgmt apps with ingress.hostname set
-│   ├── platform-ingress.yaml  # generates Ingress apps for apps-cluster apps with ingress.hostname set
-│   └── templates/ingress/     # shared Helm chart used by the ingress ApplicationSets
+│   └── platform-apps.yaml     # generates Applications from applications/platform/*/app.yaml
 └── applications/
     ├── mgmt/                  # everything deployed to the mgmt cluster
     │   └── <app>/
     │       ├── app.yaml       # Application config consumed by the ApplicationSets
     │       ├── charts/        # Helm chart (wrapper around upstream chart)
-    │       └── config/values.yaml
+    │       │   └── templates/ingress.yaml   # only for apps exposed via Traefik
+    │       └── config/values.yaml           # upstream chart values + ingress block
     └── platform/              # everything deployed to the apps cluster
         └── <app>/             # same structure; plain-manifest apps use manifests/ instead of charts/
 
@@ -46,7 +44,9 @@ scripts/
    (or `manifests/` for raw YAML), and `config/values.yaml`.
 2. Set `app.name`, `app.namespace`, `app.project`, `app.source.path`, and `app.destination.server`
    in `app.yaml` (copy a neighbouring app as a template).
-3. Optionally set `ingress.hostname` to get an Ingress + DNS record generated automatically.
+3. To expose the app: copy `charts/templates/ingress.yaml` from an existing app (e.g. pihole)
+   and add an `ingress:` block to `config/values.yaml` (hostname, serviceName, port, targetIP).
+   Manifest-based apps include a plain `manifests/ingress.yaml` instead.
 4. Commit and push — the ApplicationSets pick it up from git.
 
 ## Bootstrap

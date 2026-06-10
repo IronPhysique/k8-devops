@@ -169,3 +169,12 @@ kube-prometheus-stack:
         cpu: 25m
         memory: 64Mi
 
+
+# Grafana ingress (rendered by charts/templates/ingress.yaml)
+ingress:
+  enabled: true
+  hostname: grafana.iron-lab.org
+  serviceName: kube-prometheus-stack-grafana
+  port: 80
+  # mgmt cluster Traefik LB (used by ExternalDNS)
+  targetIP: 192.168.178.144

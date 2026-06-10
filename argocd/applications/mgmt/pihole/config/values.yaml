@@ -40,3 +40,12 @@ pihole:
   dnsmasq:
     customSettings:
       - "except-interface=lo"
+
+# Pi-hole web ingress (rendered by charts/templates/ingress.yaml)
+ingress:
+  enabled: true
+  hostname: pihole.iron-lab.org
+  serviceName: pihole-web
+  port: 8080
+  # mgmt cluster Traefik LB (used by ExternalDNS)
+  targetIP: 192.168.178.144

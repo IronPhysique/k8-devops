@@ -37,11 +37,3 @@ app:
       - CreateNamespace=true
       - ServerSideApply=true
 
-# Ingress configuration (used by the ingress ApplicationSets)
-ingress:
-  enabled: false
-  # hostname: traefik.iron-lab.org
-  # namespace: traefik
-  # cluster: apps
-  # clusterIP: 192.168.178.139
-  # clusterPort: 80

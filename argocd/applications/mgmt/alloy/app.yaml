@@ -31,9 +31,3 @@ app:
         factor: 2
         maxDuration: 2m
 
-# Ingress configuration (used by the ingress ApplicationSets)
-ingress:
-  enabled: false
-  # hostname: alloy.iron-lab.org
-  # namespace: monitoring
-  # port: 80

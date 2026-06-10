@@ -1,0 +1,27 @@
+{{- if (.Values.ingress).enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.ingress.serviceName }}
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/hostname: {{ .Values.ingress.hostname }}
+    external-dns.alpha.kubernetes.io/target: {{ .Values.ingress.targetIP }}
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - {{ .Values.ingress.hostname }}
+      secretName: {{ .Values.ingress.serviceName }}-tls
+  rules:
+    - host: {{ .Values.ingress.hostname }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.ingress.serviceName }}
+                port:
+                  number: {{ .Values.ingress.port }}
+{{- end }}

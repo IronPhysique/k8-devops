@@ -1,0 +1,46 @@
+{{- if (.Values.ingress).enabled }}
+# HTTPS backend (kong proxy): IngressRoute + ServersTransport so Traefik can
+# skip TLS verification of the backend's self-signed cert. A standard Ingress
+# cannot express this, hence the Traefik CRDs.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Values.ingress.serviceName }}
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    external-dns.alpha.kubernetes.io/hostname: {{ .Values.ingress.hostname }}
+    external-dns.alpha.kubernetes.io/target: {{ .Values.ingress.targetIP }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`{{ .Values.ingress.hostname }}`)
+      kind: Rule
+      services:
+        - name: {{ .Values.ingress.serviceName }}
+          port: {{ .Values.ingress.port }}
+          serversTransport: {{ .Values.ingress.serviceName }}-transport
+  tls:
+    secretName: {{ .Values.ingress.serviceName }}-tls
+---
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: {{ .Values.ingress.serviceName }}-transport
+spec:
+  insecureSkipVerify: true
+---
+# IngressRoute does not trigger cert-manager's ingress-shim, so the
+# Certificate is created explicitly.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Values.ingress.serviceName }}-tls
+spec:
+  secretName: {{ .Values.ingress.serviceName }}-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - {{ .Values.ingress.hostname }}
+{{- end }}

@@ -1,4 +1,0 @@
-apiVersion: v2
-name: paperless-ngx
-description: Helm chart wrapper for paperless-ngx (raw manifests) via ArgoCD
-version: 0.1.0
