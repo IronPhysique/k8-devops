@@ -13,6 +13,23 @@ Management cluster (controller.local - Pi 5)   Apps cluster (server.local - PC)
 └── Kyverno / Trivy / Dashboards
 ```
 
+## Stack
+
+| Area | Components |
+|---|---|
+| Cluster | k3s on both nodes (Traefik/servicelb disabled, replaced by chart-managed Traefik) |
+| GitOps | Argo CD + ApplicationSets (git file generators over `app.yaml` files), Helm wrapper charts |
+| Ingress | Traefik v3 (+ separate traefik-crds app), per-app Ingress/IngressRoute templates |
+| TLS | cert-manager — Let's Encrypt prod/staging via Cloudflare DNS-01, plus a self-signed `homelab-ca` ClusterIssuer |
+| DNS | external-dns → Cloudflare (`iron-lab.org`, one instance per cluster with separate txtOwnerIds); Pi-hole for LAN DNS/ad-blocking |
+| Secrets | Sealed Secrets (Cloudflare API tokens committed as SealedSecrets; helper scripts in `scripts/`) |
+| Monitoring | kube-prometheus-stack (Prometheus, Grafana, Alertmanager, node-exporter), custom Grafana dashboards app |
+| Logging | Grafana Alloy (pod log collection) → Loki |
+| Security & policy | Kyverno (policies), Trivy Operator (vulnerability scanning) |
+| Delivery | Argo Rollouts (apps cluster, progressive delivery) |
+| Ops UI | Kubernetes Dashboard (kong proxy, exposed via Traefik IngressRoute) |
+| Workloads | paperless-ngx (raw manifests; backed by its own Redis 7 and PostgreSQL 16 instances) |
+
 ## Repository layout
 
 ```
@@ -62,7 +79,3 @@ cp config.env.example config.env   # edit with your IPs
 Change these after first login:
 - **ArgoCD:** admin / (shown after bootstrap)
 - **Grafana:** admin / changeme
-
-## Stack
-
-k3s, Argo CD, Traefik, Prometheus/Grafana/Loki, cert-manager, external-dns, Sealed Secrets, Pi-hole, Kyverno, Trivy, Argo Rollouts
