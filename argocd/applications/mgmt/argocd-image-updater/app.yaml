@@ -1,0 +1,32 @@
+# ArgoCD Image Updater - watches container registries and writes new image
+# digests back to git for annotated Applications (e.g. leafing).
+# Lives next to ArgoCD on the mgmt cluster.
+app:
+  name: argocd-image-updater
+  namespace: argocd
+  cluster: mgmt
+  project: mgmt-platform
+
+  source:
+    path: argocd/applications/mgmt/argocd-image-updater/charts
+    helm:
+      releaseName: argocd-image-updater
+      valueFiles:
+        - ../config/values.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m

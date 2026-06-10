@@ -1,0 +1,27 @@
+# Headlamp - Kubernetes UI (in-cluster mode, shows the apps cluster).
+# Log in with a ServiceAccount token:
+#   kubectl --context=apps-cluster -n headlamp create token headlamp
+headlamp:
+  replicaCount: 1
+
+  # Binds the headlamp ServiceAccount to cluster-admin so the token above
+  # can see everything (chart default)
+  clusterRoleBinding:
+    create: true
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+# Ingress (rendered by charts/templates/ingress.yaml)
+ingress:
+  enabled: true
+  hostname: headlamp.iron-lab.org
+  serviceName: headlamp
+  port: 80
+  # apps cluster Traefik LB (used by ExternalDNS)
+  targetIP: 192.168.178.139

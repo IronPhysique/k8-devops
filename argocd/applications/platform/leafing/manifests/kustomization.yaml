@@ -1,0 +1,13 @@
+# Kustomize wrapper so ArgoCD Image Updater can pin the leafing image by
+# digest (it writes a .argocd-source-leafing.yaml override next to this
+# file via git write-back). Applies to both the web and worker Deployments.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+  - service.yaml
+  - pvc.yaml
+  - ingress.yaml
+images:
+  - name: ghcr.io/ironphysique/leafing
+    newTag: latest

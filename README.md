@@ -9,11 +9,12 @@ ingress/TLS/DNS stack needed to expose those two. Everything else runs on the ap
 
 ```
 Management cluster (controller.local - Pi 5)   Apps / platform cluster (server.local - PC)
-├── Argo CD (controls both clusters)           ├── Traefik / cert-manager / external-dns
-├── Pi-hole (LAN DNS / ad-blocking)            ├── Prometheus / Grafana / Loki / Alloy
-└── Traefik / cert-manager / external-dns      ├── Kyverno / Trivy / Kubernetes Dashboard
-    + Sealed Secrets                           ├── Argo Rollouts / Velero (S3 backups)
-    (only to serve ArgoCD + Pi-hole)           └── Workloads (paperless-ngx, leafing)
+├── Argo CD + Image Updater (controls both)    ├── Traefik / cert-manager / external-dns
+├── Pi-hole (LAN DNS / ad-blocking)            ├── Longhorn (storage) / Velero (S3 backups)
+└── Traefik / cert-manager / external-dns      ├── Prometheus / Grafana / Loki / Alloy
+    + Sealed Secrets                           ├── Kyverno / Trivy / Headlamp
+    (only to serve ArgoCD + Pi-hole)           ├── Argo Rollouts
+                                               └── Workloads (paperless-ngx, leafing)
 ```
 
 ## Stack
@@ -21,7 +22,8 @@ Management cluster (controller.local - Pi 5)   Apps / platform cluster (server.l
 | Area | Components |
 |---|---|
 | Cluster | k3s on both nodes (Traefik/servicelb disabled, replaced by chart-managed Traefik) |
-| GitOps | Argo CD + ApplicationSets (git file generators over `app.yaml` files), Helm wrapper charts |
+| GitOps | Argo CD + ApplicationSets (git file generators over `app.yaml` files), Helm wrapper charts; Image Updater digest-tracks leafing and writes pins back to git |
+| Storage | Longhorn (replicated block storage + snapshots; local-path stays the default StorageClass until flipped) |
 | Ingress | Traefik v3 (+ separate traefik-crds app), per-app Ingress/IngressRoute templates |
 | TLS | cert-manager — Let's Encrypt prod/staging via Cloudflare DNS-01, plus a self-signed `homelab-ca` ClusterIssuer |
 | DNS | external-dns → Cloudflare (`iron-lab.org`, one instance per cluster with separate txtOwnerIds); Pi-hole for LAN DNS/ad-blocking |
@@ -31,7 +33,7 @@ Management cluster (controller.local - Pi 5)   Apps / platform cluster (server.l
 | Backups | Velero + node agent (kopia file-system backups for local-path PVs) → S3, daily schedule |
 | Security & policy | Kyverno (policies), Trivy Operator (vulnerability scanning) |
 | Delivery | Argo Rollouts (apps cluster, progressive delivery) |
-| Ops UI | Kubernetes Dashboard (kong proxy, exposed via Traefik IngressRoute) |
+| Ops UI | Headlamp (`headlamp.iron-lab.org`, token login); Kubernetes Dashboard (retired upstream, kept until Headlamp is proven); Longhorn UI (port-forward only, no auth) |
 | Workloads | paperless-ngx (raw manifests; backed by its own Redis 7 and PostgreSQL 16 instances); leafing (Next.js web + BullMQ worker from one GHCR image, PostgreSQL 18, Redis 8, FlareSolverr) |
 | CI | GitHub Actions — kubeconform + helm-template validation of this repo on every push/PR |
 

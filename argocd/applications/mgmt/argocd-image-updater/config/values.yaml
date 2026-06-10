@@ -1,0 +1,31 @@
+# ArgoCD Image Updater - automated image bumps for annotated Applications.
+#
+# How an app opts in (see platform/leafing/app.yaml for a live example):
+#   annotations:
+#     argocd-image-updater.argoproj.io/image-list: <alias>=<image>:<tag>
+#     argocd-image-updater.argoproj.io/<alias>.update-strategy: digest
+#     argocd-image-updater.argoproj.io/write-back-method: git
+#     argocd-image-updater.argoproj.io/git-branch: main
+#
+# NOTE: git write-back reuses the repo credentials ArgoCD already has for
+# k8-devops - the SSH key configured in ArgoCD must have WRITE access to
+# the repo (a read-only deploy key will fail with push errors in the
+# image-updater logs).
+argocd-image-updater:
+  fullnameOverride: argocd-image-updater
+
+  config:
+    # Read Applications straight from the cluster (same namespace as ArgoCD)
+    applicationsAPIKind: kubernetes
+    logLevel: info
+
+  metrics:
+    enabled: false
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 25m
+      memory: 64Mi

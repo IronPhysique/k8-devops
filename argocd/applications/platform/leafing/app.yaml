@@ -1,10 +1,18 @@
 # Leafing application configuration (manga/manhwa reader)
-# Image is built by GitHub Actions in IronPhysique/leafing (ghcr.io)
+# Image is built by GitHub Actions in IronPhysique/leafing (ghcr.io).
+# ArgoCD Image Updater tracks the latest tag's digest and writes the pin
+# back to git (manifests/.argocd-source-leafing.yaml), so every image
+# push auto-deploys without a manual bump.
 app:
   name: leafing
   namespace: leafing
   cluster: apps
   project: applications
+  annotations:
+    argocd-image-updater.argoproj.io/image-list: leafing=ghcr.io/ironphysique/leafing:latest
+    argocd-image-updater.argoproj.io/leafing.update-strategy: digest
+    argocd-image-updater.argoproj.io/write-back-method: git
+    argocd-image-updater.argoproj.io/git-branch: main
 
   # Source configuration
   source:

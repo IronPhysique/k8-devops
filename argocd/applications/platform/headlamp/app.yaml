@@ -1,0 +1,31 @@
+# Headlamp application configuration (Kubernetes UI - successor to the
+# retired kubernetes-dashboard; that app can be deleted once you're happy)
+app:
+  name: headlamp
+  namespace: headlamp
+  cluster: apps
+  project: apps-platform
+
+  source:
+    path: argocd/applications/platform/headlamp/charts
+    helm:
+      releaseName: headlamp
+      valueFiles:
+        - ../config/values.yaml
+
+  destination:
+    server: https://192.168.178.139:6443
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m

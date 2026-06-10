@@ -1,0 +1,28 @@
+# Longhorn - replicated block storage with snapshots and S3 backup support.
+#
+# NODE PREREQUISITE (before first sync):
+#   sudo apt install -y open-iscsi && sudo systemctl enable --now iscsid
+#
+# Migration plan: local-path stays the default StorageClass for now, so
+# existing PVCs (paperless, leafing, prometheus, ...) are untouched. New
+# apps can opt in with storageClassName: longhorn. Flip defaultClass to
+# true once you trust it (and de-default local-path on the node).
+longhorn:
+  persistence:
+    defaultClass: false
+    defaultClassReplicaCount: 1   # single-node cluster - no peers to replicate to
+
+  defaultSettings:
+    defaultReplicaCount: 1
+    # Where Longhorn stores volume data on the node
+    defaultDataPath: /var/lib/longhorn
+    # Optional: Longhorn-native S3 backups of volumes (complements Velero).
+    # Uses a secret like velero's, in the longhorn-system namespace:
+    # backupTarget: s3://CHANGEME-homelab-backups@eu-west-2/longhorn
+    # backupTargetCredentialSecret: longhorn-s3-credentials
+
+  # The Longhorn UI has NO authentication - do not expose it via ingress
+  # without an auth middleware. Access it with:
+  #   kubectl -n longhorn-system port-forward svc/longhorn-frontend 8080:80
+  ingress:
+    enabled: false

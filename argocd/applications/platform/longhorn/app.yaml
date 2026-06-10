@@ -1,0 +1,32 @@
+# Longhorn application configuration (replicated block storage + snapshots)
+# NODE PREREQUISITE: open-iscsi must be installed on the apps node:
+#   sudo apt install -y open-iscsi && sudo systemctl enable --now iscsid
+app:
+  name: longhorn
+  namespace: longhorn-system
+  cluster: apps
+  project: apps-platform
+
+  source:
+    path: argocd/applications/platform/longhorn/charts
+    helm:
+      releaseName: longhorn
+      valueFiles:
+        - ../config/values.yaml
+
+  destination:
+    server: https://192.168.178.139:6443
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m

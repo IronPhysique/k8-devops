@@ -149,6 +149,10 @@ spec:
       server: https://192.168.178.139:6443
     - namespace: 'velero'
       server: https://192.168.178.139:6443
+    - namespace: 'longhorn-system'
+      server: https://192.168.178.139:6443
+    - namespace: 'headlamp'
+      server: https://192.168.178.139:6443
     # Mgmt cluster (apps *-mgmt when ArgoCD runs on mgmt)
     - namespace: 'monitoring'
       server: https://kubernetes.default.svc
@@ -189,6 +193,13 @@ spec:
       kind: ClusterComplianceReport
     - group: 'wgpolicyk8s.io'
       kind: ClusterPolicyReport
+    # Longhorn
+    - group: 'storage.k8s.io'
+      kind: StorageClass
+    - group: 'storage.k8s.io'
+      kind: CSIDriver
+    - group: 'scheduling.k8s.io'
+      kind: PriorityClass
   namespaceResourceWhitelist:
     - group: '*'
       kind: '*'
