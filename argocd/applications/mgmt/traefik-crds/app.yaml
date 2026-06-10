@@ -1,0 +1,38 @@
+# Traefik CRDs application configuration for mgmt cluster
+# This application installs ONLY Traefik CRDs (IngressRoute, Middleware, etc.)
+# and explicitly excludes Gateway API CRDs.
+app:
+  name: traefik-crds
+  namespace: traefik
+  cluster: mgmt
+  project: mgmt-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+
+  source:
+    path: argocd/applications/mgmt/traefik-crds/charts
+    helm:
+      releaseName: traefik-crds
+      valueFiles:
+        - ../config/values.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m
+
+# Ingress configuration
+ingress:
+  enabled: false

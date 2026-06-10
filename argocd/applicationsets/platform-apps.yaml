@@ -1,10 +1,12 @@
 ---
-# ApplicationSet: Deploy all mgmt cluster applications
-# Scans applications/mgmt/*/app.yaml
+# ApplicationSet: Deploy all apps-cluster (platform) applications
+# Scans applications/platform/*/app.yaml
+# NOTE: This ApplicationSet expects all Helm apps to use ../config/values.yaml
+# For non-Helm apps, the helm section is ignored
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: mgmt-apps
+  name: platform-apps
   namespace: argocd
 spec:
   goTemplate: true
@@ -14,8 +16,7 @@ spec:
         repoURL: git@github.com:IronPhysique/k8-devops.git
         revision: main
         files:
-          - path: "argocd/applications/mgmt/*/app.yaml"
-
+          - path: "argocd/applications/platform/*/app.yaml"
   template:
     metadata:
       name: '{{ .app.name }}'
@@ -26,14 +27,12 @@ spec:
         targetRevision: main
         path: '{{ .app.source.path }}'
         helm:
-          releaseName: '{{ .app.source.helm.releaseName }}'
+          releaseName: '{{ if .app.source.helm }}{{ .app.source.helm.releaseName }}{{ else }}{{ .app.name }}{{ end }}'
           valueFiles:
-            - '../config/values.yaml'
-
+            - ../config/values.yaml
       destination:
-        server: '{{ if .app.destination.server }}{{ .app.destination.server }}{{ else }}https://kubernetes.default.svc{{ end }}'
+        server: '{{ .app.destination.server }}'
         namespace: '{{ .app.namespace }}'
-
       syncPolicy:
         automated:
           prune: true

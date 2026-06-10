@@ -190,7 +190,7 @@ echo "[4/5] Triggering GitOps sync for apps platform..."
 echo "Waiting for apps platform applications to appear..."
 sleep 10
 
-kubectl get applications -n argocd | grep apps- || true
+kubectl get applications -n argocd || true
 
 echo ""
 echo "=== Apps Cluster Bootstrap Complete ==="

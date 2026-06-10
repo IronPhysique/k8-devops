@@ -1,0 +1,42 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paperless-ngx
+  namespace: paperless
+spec:
+  selector:
+    app: paperless-ngx
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: http
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paperless-redis
+  namespace: paperless
+spec:
+  selector:
+    app: paperless-redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paperless-postgres
+  namespace: paperless
+spec:
+  selector:
+    app: paperless-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP
+# Note: Ingress is now created via platform-ingress ApplicationSet
+# which adds proper TLS and ExternalDNS annotations

@@ -1,0 +1,34 @@
+# Argo-rollouts application configuration
+app:
+  name: argo-rollouts
+  namespace: argo-rollouts
+  cluster: apps
+  project: apps-platform
+
+  source:
+    path: argocd/applications/platform/argo-rollouts/charts
+    helm:
+      releaseName: argo-rollouts
+      valueFiles:
+        - ../config/values.yaml
+
+  destination:
+    server: https://192.168.178.139:6443
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m
+
+# Ingress configuration
+ingress:
+  enabled: false

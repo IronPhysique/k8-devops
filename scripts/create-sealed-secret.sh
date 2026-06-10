@@ -12,7 +12,7 @@ read -p "Namespace: " NAMESPACE
 read -p "Secret key (e.g., api-token, password): " SECRET_KEY
 read -sp "Secret value: " SECRET_VALUE
 echo ""
-read -p "Output file path (e.g., argocd/applications/mgmt/platform/my-app/sealed-secret.yaml): " OUTPUT_FILE
+read -p "Output file path (e.g., argocd/applications/mgmt/my-app/sealed-secret.yaml): " OUTPUT_FILE
 
 echo ""
 echo "Creating sealed secret..."

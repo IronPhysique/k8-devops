@@ -1,0 +1,34 @@
+# Sealed-secrets application configuration
+app:
+  name: sealed-secrets
+  namespace: sealed-secrets
+  cluster: mgmt
+  project: mgmt-platform
+
+  source:
+    path: argocd/applications/mgmt/sealed-secrets/charts
+    helm:
+      releaseName: sealed-secrets
+      valueFiles:
+        - ../config/values.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m
+
+# Ingress configuration
+ingress:
+  enabled: false

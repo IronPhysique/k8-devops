@@ -155,26 +155,9 @@ echo ""
 ########################################################
 echo "[4/6] Deploying AppProjects and ApplicationSets..."
 kubectl apply -f "$PROJECT_ROOT/argocd/bootstrap/projects.yaml"
-# Note: applicationsets.yaml is now disabled - ApplicationSets cannot be deployed via Application
-# ApplicationSets are cluster-scoped resources and must be applied directly
-# kubectl apply -f "$PROJECT_ROOT/argocd/bootstrap/applicationsets.yaml"
+# ApplicationSets in argocd/applicationsets/ generate all Applications from
+# app.yaml files in argocd/applications/{mgmt,platform}/ via git generators.
 kubectl apply -f "$PROJECT_ROOT/argocd/applicationsets/"
-# Apply ApplicationSets from applications directory
-for appsets in "$PROJECT_ROOT/argocd/applications/mgmt/platform"/*/*.yaml \
-               "$PROJECT_ROOT/argocd/applications/apps/platform"/*/*.yaml \
-               "$PROJECT_ROOT/argocd/applications/apps/services"/*/*.yaml; do
-  if [[ -f "$appsets" ]] && \
-     [[ "$appsets" != *"ingress.yaml" ]] && \
-     [[ "$appsets" != *"ingress-resource.yaml" ]] && \
-     [[ "$appsets" != *"values.yaml" ]] && \
-     [[ "$appsets" != *"Chart.yaml" ]] && \
-     [[ "$appsets" != *"sealedsecret"* ]] && \
-     [[ "$appsets" != *"manifests"* ]] && \
-     [[ "$appsets" != *"dashboards"* ]] && \
-     [[ "$appsets" != *"templates"* ]]; then
-    kubectl apply -f "$appsets" || echo "Warning: Failed to apply $appsets"
-  fi
-done
 
 echo "Waiting for ApplicationSets to be ready..."
 sleep 5

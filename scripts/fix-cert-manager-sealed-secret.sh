@@ -41,12 +41,12 @@ fi
 if [ "$CLUSTER" = "apps" ]; then
   KUBECTL_CMD="kubectl --context=apps-cluster"
   KUBESEAL_CMD="kubeseal --controller-name=${CONTROLLER_NAME} --controller-namespace=${CONTROLLER_NAMESPACE} --context=apps-cluster"
-  OUTPUT_FILE="argocd/applications/apps/platform/cert-manager/charts/templates/00-cloudflare-sealedsecret.yaml"
+  OUTPUT_FILE="argocd/applications/platform/cert-manager/charts/templates/00-cloudflare-sealedsecret.yaml"
   NAMESPACE="cert-manager"
 else
   KUBECTL_CMD="kubectl"
   KUBESEAL_CMD="kubeseal --controller-name=${CONTROLLER_NAME} --controller-namespace=${CONTROLLER_NAMESPACE}"
-  OUTPUT_FILE="argocd/applications/mgmt/platform/cert-manager/charts/templates/00-cloudflare-sealedsecret.yaml"
+  OUTPUT_FILE="argocd/applications/mgmt/cert-manager/charts/templates/00-cloudflare-sealedsecret.yaml"
   NAMESPACE="cert-manager"
 fi
 

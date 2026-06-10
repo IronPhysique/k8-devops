@@ -1,0 +1,45 @@
+# Traefik application configuration for mgmt cluster
+app:
+  name: traefik
+  namespace: traefik
+  cluster: mgmt
+  project: mgmt-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+
+  source:
+    path: argocd/applications/mgmt/traefik/charts
+    helm:
+      releaseName: traefik
+      # Skip CRD installation when rendering with Helm.  Without this, the Traefik
+      # chart automatically installs Gateway API and other CRDs from its `crds`
+      # directory.  Argo CD interprets CRDs as normal resources and applies
+      # them as part of the application, which leads to duplicate CRD objects
+      # and RepeatedResourceWarning.  Setting `skipCrds` prevents those CRDs
+      # from being installed by this application.  Traefik-specific CRDs
+      # (IngressRoute, Middleware, etc.) should be installed by the separate
+      # `traefik-crds` chart.
+      skipCrds: true
+      valueFiles:
+        - ../config/values.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m
+
+# Ingress configuration
+ingress:
+  enabled: false
