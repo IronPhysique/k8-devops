@@ -21,6 +21,7 @@ app:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
     retry:
       limit: 3
       backoff:

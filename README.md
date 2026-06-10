@@ -58,14 +58,18 @@ scripts/
 
 ### Adding an app
 
-1. Create `argocd/applications/<mgmt|platform>/<app>/` with an `app.yaml`, a `charts/` Helm chart
-   (or `manifests/` for raw YAML), and `config/values.yaml`.
-2. Set `app.name`, `app.namespace`, `app.project`, `app.source.path`, and `app.destination.server`
-   in `app.yaml` (copy a neighbouring app as a template).
-3. To expose the app: copy `charts/templates/ingress.yaml` from an existing app (e.g. pihole)
-   and add an `ingress:` block to `config/values.yaml` (hostname, serviceName, port, targetIP).
-   Manifest-based apps include a plain `manifests/ingress.yaml` instead.
-4. Commit and push — the ApplicationSets pick it up from git.
+1. Copy the golden template: `cp -r docs/new-app-skeleton argocd/applications/<mgmt|platform>/<app>`
+2. Edit `charts/Chart.yaml` (upstream chart name/version/repo) and `config/values.yaml`
+   (chart values + the `ingress:` block, or delete it and `charts/templates/ingress.yaml`
+   if the app isn't exposed).
+3. `app.yaml`: every field is optional — name/namespace/release default to the folder
+   name, the chart path and destination are derived from where the folder lives, and
+   `syncPolicy` merges over the fleet default in the ApplicationSet. Keep the fields you
+   may want to tweak, delete the rest; `app: {}` is the minimum.
+4. If the app needs a namespace the AppProject doesn't allow yet, add it to
+   `argocd/bootstrap/projects.yaml`.
+5. Commit and push — the ApplicationSets pick it up from git, and CI validates the chart
+   render on the PR.
 
 ## Bootstrap
 

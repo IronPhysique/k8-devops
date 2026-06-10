@@ -1,0 +1,8 @@
+apiVersion: v2
+name: CHANGEME
+description: Helm chart wrapper for CHANGEME via ArgoCD
+version: 0.1.0
+dependencies:
+  - name: CHANGEME                          # upstream chart name
+    version: "x.y.z"                        # pin the version; bump to upgrade
+    repository: "https://charts.example.com"

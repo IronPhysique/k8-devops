@@ -1,6 +1,16 @@
 ---
 # ApplicationSet: Deploy all mgmt cluster applications
 # Scans applications/mgmt/*/app.yaml
+#
+# Every field in app.yaml is optional — defaults are derived from the folder:
+#   name / namespace / releaseName  -> folder name
+#   source.path                     -> <folder>/charts
+#   project                         -> mgmt-platform
+#   destination.server              -> in-cluster (mgmt)
+#   syncPolicy                      -> fleet default below
+# Anything set in app.yaml overrides its default. syncPolicy is merged over
+# the fleet default (maps deep-merge, lists replace). The app.yaml file must
+# contain at least `app: {}`.
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -18,22 +28,23 @@ spec:
 
   template:
     metadata:
-      name: '{{ .app.name }}'
+      name: '{{ dig "app" "name" .path.basename . }}'
     spec:
-      project: '{{ .app.project }}'
+      project: '{{ dig "app" "project" "mgmt-platform" . }}'
       source:
         repoURL: git@github.com:IronPhysique/k8-devops.git
         targetRevision: main
-        path: '{{ .app.source.path }}'
+        path: '{{ dig "app" "source" "path" (printf "%s/charts" .path.path) . }}'
         helm:
-          releaseName: '{{ .app.source.helm.releaseName }}'
+          releaseName: '{{ dig "app" "source" "helm" "releaseName" .path.basename . }}'
           valueFiles:
             - '../config/values.yaml'
 
       destination:
-        server: '{{ if .app.destination.server }}{{ .app.destination.server }}{{ else }}https://kubernetes.default.svc{{ end }}'
-        namespace: '{{ .app.namespace }}'
+        server: '{{ dig "app" "destination" "server" "https://kubernetes.default.svc" . }}'
+        namespace: '{{ dig "app" "namespace" .path.basename . }}'
 
+      # Fleet-default sync policy (per-app syncPolicy merges over this)
       syncPolicy:
         automated:
           prune: true
@@ -48,19 +59,37 @@ spec:
             factor: 2
             maxDuration: 2m
 
-  # Optional per-app fields (annotations, helm skipCrds) are merged in here.
-  # Go-template control flow is only valid inside templatePatch, not template.
+  # Optional per-app fields that need template control flow are merged in
+  # here. Go-template control flow is only valid inside templatePatch.
   templatePatch: |
-    {{- if .app.annotations }}
+    {{- $annotations := dig "app" "annotations" (dict) . }}
+    {{- $skipCrds := dig "app" "source" "helm" "skipCrds" false . }}
+    {{- $valueFiles := dig "app" "source" "helm" "valueFiles" (list) . }}
+    {{- $syncPolicy := dig "app" "syncPolicy" (dict) . }}
+    {{- if $annotations }}
     metadata:
       annotations:
-        {{- range $key, $value := .app.annotations }}
+        {{- range $key, $value := $annotations }}
         {{ $key }}: {{ $value | quote }}
         {{- end }}
     {{- end }}
-    {{- if and .app.source.helm .app.source.helm.skipCrds }}
+    {{- if or $skipCrds $valueFiles $syncPolicy }}
     spec:
+      {{- if or $skipCrds $valueFiles }}
       source:
         helm:
+          {{- if $skipCrds }}
           skipCrds: true
+          {{- end }}
+          {{- if $valueFiles }}
+          valueFiles:
+            {{- range $valueFiles }}
+            - {{ . | quote }}
+            {{- end }}
+          {{- end }}
+      {{- end }}
+      {{- if $syncPolicy }}
+      syncPolicy:
+        {{- toYaml $syncPolicy | nindent 4 }}
+      {{- end }}
     {{- end }}

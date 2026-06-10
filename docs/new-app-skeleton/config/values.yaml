@@ -1,0 +1,15 @@
+# Values for the upstream chart go under its dependency name:
+CHANGEME:
+  # replicaCount: 1
+  # ...
+
+# Ingress (rendered by charts/templates/ingress.yaml).
+# Delete this block AND charts/templates/ingress.yaml if the app is not exposed.
+ingress:
+  enabled: true
+  hostname: CHANGEME.iron-lab.org
+  serviceName: CHANGEME           # the Service the chart creates
+  port: 80
+  # Traefik LB of the cluster this app runs on (used by ExternalDNS):
+  #   mgmt: 192.168.178.144   apps: 192.168.178.139
+  targetIP: 192.168.178.139

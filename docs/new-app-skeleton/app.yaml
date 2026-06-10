@@ -1,0 +1,39 @@
+# ArgoCD configuration for this app — every field below is OPTIONAL.
+# Delete a line and its default (derived from the folder) applies:
+#   name / namespace / releaseName  -> folder name
+#   source.path                     -> <this folder>/charts
+#   project                         -> mgmt-platform or apps-platform (per cluster dir)
+#   destination.server              -> the cluster this directory belongs to
+#   syncPolicy                      -> fleet default in the ApplicationSet;
+#                                      anything set here is merged over it
+# The file itself registers the app, so keep at least `app: {}`.
+app:
+  name: CHANGEME
+  namespace: CHANGEME
+  project: apps-platform        # mgmt-platform | apps-platform | applications
+
+  source:
+    path: argocd/applications/platform/CHANGEME/charts   # or .../manifests for raw YAML
+    helm:
+      releaseName: CHANGEME
+      # skipCrds: true          # if the chart bundles CRDs managed elsewhere
+
+  destination:
+    server: https://192.168.178.139:6443   # apps cluster (mgmt: https://kubernetes.default.svc)
+
+  # annotations:
+  #   argocd.argoproj.io/sync-wave: "0"    # lower waves sync first
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m
