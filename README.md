@@ -25,6 +25,7 @@ Management cluster (controller.local - Pi 5)   Apps / platform cluster (server.l
 | GitOps | Argo CD + ApplicationSets (git file generators over `app.yaml` files), Helm wrapper charts; Image Updater digest-tracks leafing and writes pins back to git |
 | Storage | Longhorn (replicated block storage + snapshots; local-path stays the default StorageClass until flipped) |
 | Ingress | Traefik v3 (+ separate traefik-crds app), per-app Ingress/IngressRoute templates |
+| Load balancing | MetalLB (L2) — VIP pools per cluster: Traefik on `.210` (mgmt) / `.220` (apps), Pi-hole DNS on `.211`; reserve `.210-.229` outside the router's DHCP range |
 | TLS | cert-manager — Let's Encrypt prod/staging via Cloudflare DNS-01, plus a self-signed `homelab-ca` ClusterIssuer |
 | DNS | external-dns → Cloudflare (`iron-lab.org`, one instance per cluster with separate txtOwnerIds); Pi-hole for LAN DNS/ad-blocking |
 | Secrets | Sealed Secrets (Cloudflare API tokens committed as SealedSecrets; helper scripts in `scripts/`) |

@@ -8,7 +8,7 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     external-dns.alpha.kubernetes.io/hostname: leafing.iron-lab.org
     # Apps cluster Traefik LB
-    external-dns.alpha.kubernetes.io/target: 192.168.178.139
+    external-dns.alpha.kubernetes.io/target: 192.168.178.220
 spec:
   ingressClassName: traefik
   tls:

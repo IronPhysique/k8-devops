@@ -156,4 +156,4 @@ ingress:
   serviceName: kube-prometheus-stack-grafana
   port: 80
   # apps cluster Traefik LB (used by ExternalDNS)
-  targetIP: 192.168.178.139
+  targetIP: 192.168.178.220

@@ -1,0 +1,8 @@
+apiVersion: v2
+name: metallb
+description: Helm chart wrapper for MetalLB via ArgoCD
+version: 0.1.0
+dependencies:
+  - name: metallb
+    version: "0.16.1"
+    repository: "https://metallb.github.io/metallb"

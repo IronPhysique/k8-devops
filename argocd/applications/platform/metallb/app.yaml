@@ -1,0 +1,35 @@
+# MetalLB application configuration (bare-metal LoadBalancer, L2 mode)
+# Hands out VIPs from the pool in config/values.yaml. Reserve that range
+# outside your router's DHCP scope.
+app:
+  name: metallb-apps
+  namespace: metallb-system
+  cluster: apps
+  project: apps-platform
+  annotations:
+    # LB controller must exist before Traefik asks for its VIP
+    argocd.argoproj.io/sync-wave: "-2"
+
+  source:
+    path: argocd/applications/platform/metallb/charts
+    helm:
+      releaseName: metallb
+      valueFiles:
+        - ../config/values.yaml
+
+  destination:
+    server: https://192.168.178.139:6443
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m

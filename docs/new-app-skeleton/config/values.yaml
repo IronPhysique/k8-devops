@@ -11,5 +11,5 @@ ingress:
   serviceName: CHANGEME           # the Service the chart creates
   port: 80
   # Traefik LB of the cluster this app runs on (used by ExternalDNS):
-  #   mgmt: 192.168.178.144   apps: 192.168.178.139
-  targetIP: 192.168.178.139
+  #   mgmt: 192.168.178.210   apps: 192.168.178.220
+  targetIP: 192.168.178.220

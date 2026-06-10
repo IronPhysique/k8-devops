@@ -1,0 +1,14 @@
+# MetalLB (mgmt cluster) - L2 mode.
+# VIPs handed out on this cluster:
+#   192.168.178.210  Traefik (all mgmt ingresses / *.iron-lab.org on mgmt)
+#   192.168.178.211  Pi-hole DNS (point the router's DNS here)
+#
+# IMPORTANT: make sure 192.168.178.210-219 is OUTSIDE the router's DHCP
+# range (Fritz!Box: Home Network > Network > IPv4 Addresses).
+pool:
+  name: homelab
+  addresses:
+    - 192.168.178.210-192.168.178.219
+
+# Chart values (defaults are fine for L2 mode)
+metallb: {}

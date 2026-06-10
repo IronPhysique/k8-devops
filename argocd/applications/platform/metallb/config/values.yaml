@@ -1,0 +1,14 @@
+# MetalLB (apps cluster) - L2 mode.
+# VIPs handed out on this cluster:
+#   192.168.178.220  Traefik (all apps-cluster ingresses: grafana, paperless,
+#                    leafing, headlamp, dashboard, ...)
+#
+# IMPORTANT: make sure 192.168.178.220-229 is OUTSIDE the router's DHCP
+# range (Fritz!Box: Home Network > Network > IPv4 Addresses).
+pool:
+  name: homelab
+  addresses:
+    - 192.168.178.220-192.168.178.229
+
+# Chart values (defaults are fine for L2 mode)
+metallb: {}

@@ -19,8 +19,15 @@ pihole:
     https:
       enabled: false
 
+  # DNS is additionally exposed on a MetalLB VIP. hostNetwork above still
+  # serves :53 on the Pi's own IP (.144), so the router keeps working -
+  # migrate it to .211 whenever convenient, then hostNetwork can be dropped.
   serviceDns:
-    type: ClusterIP
+    type: LoadBalancer
+    annotations:
+      metallb.io/loadBalancerIPs: 192.168.178.211
+    # one Service for both TCP and UDP :53
+    mixedService: true
     port: 53
 
   probes:
@@ -47,5 +54,5 @@ ingress:
   hostname: pihole.iron-lab.org
   serviceName: pihole-web
   port: 8080
-  # mgmt cluster Traefik LB (used by ExternalDNS)
-  targetIP: 192.168.178.144
+  # mgmt cluster Traefik VIP (used by ExternalDNS)
+  targetIP: 192.168.178.210

@@ -29,7 +29,7 @@ external-dns:
 
   # Default target IP for DNS records (apps cluster Traefik LB IP)
   extraArgs:
-    - --default-targets=192.168.178.139
+    - --default-targets=192.168.178.220
 
   logLevel: info
   logFormat: text

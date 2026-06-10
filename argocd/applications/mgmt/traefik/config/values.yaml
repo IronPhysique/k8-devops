@@ -36,11 +36,11 @@ traefik:
       tls:
         enabled: true
 
-  # Service configuration - LoadBalancer with external IP for single-node k3s
+  # LoadBalancer service - MetalLB assigns the VIP below (mgmt pool)
   service:
     type: LoadBalancer
-    externalIPs:
-      - 192.168.178.144
+    annotations:
+      metallb.io/loadBalancerIPs: 192.168.178.210
 
   # Enable Prometheus metrics
   metrics:
@@ -91,4 +91,4 @@ traefik:
 
   # Set static IP for ingress status since no cloud LB is available
   additionalArguments:
-    - "--providers.kubernetesingress.ingressendpoint.ip=192.168.178.144"
+    - "--providers.kubernetesingress.ingressendpoint.ip=192.168.178.210"
